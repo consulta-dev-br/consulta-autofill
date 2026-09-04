@@ -1,5 +1,7 @@
 # Exemplo FastAPI
 
+Requer Python 3.9 ou superior.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate

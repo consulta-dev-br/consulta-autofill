@@ -47,7 +47,7 @@ Quando o pacote estiver publicado, carregue uma versão exata pelo npm ou pelo C
 ```html
 <script
   type="module"
-  src="https://cdn.consulta.dev.br/autofill/v1.0.0/consulta-autofill.min.js"
+  src="https://cdn.consulta.dev.br/autofill/v0.1.0/consulta-autofill.min.js"
   integrity="sha384-<valor-do-release-manifest>"
   crossorigin="anonymous"></script>
 ```
