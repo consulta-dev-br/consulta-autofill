@@ -30,9 +30,9 @@ Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br
 
 | Pacote | Finalidade | Estado |
 |---|---|---|
-| `@consulta-dev/autofill` | Web Component e contrato público | Beta `v0.1.2` publicada |
-| `@consulta-dev/qr-engine` | Interface de leitura de QR no navegador | Beta `v0.1.2` publicada |
-| `apps/embed` | Aplicação hospedada no iframe | Beta `v0.1.2` publicada |
+| `@consulta-dev/autofill` | Web Component e contrato público | Beta `v0.1.3` publicada |
+| `@consulta-dev/qr-engine` | Interface de leitura de QR no navegador | Beta `v0.1.3` publicada |
+| `apps/embed` | Aplicação hospedada no iframe | Beta `v0.1.3` publicada |
 
 ## Desenvolvimento
 
@@ -76,7 +76,7 @@ O schema de referência do contrato v1 está em [packages/autofill/contracts/v1/
 
 ## Status
 
-A beta [`v0.1.2`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.2) está publicada no CDN e na GitHub Release. Os pacotes npm ainda aguardam a configuração de Trusted Publishing; até lá, integre uma versão exata pelo CDN. A API e o produto continuam em beta e não devem ser assumidos como estáveis.
+A beta [`v0.1.3`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.3) está publicada no CDN e na GitHub Release. Os pacotes npm ainda aguardam a configuração de Trusted Publishing; até lá, integre uma versão exata pelo CDN. A API e o produto continuam em beta e não devem ser assumidos como estáveis.
 
 ## Licença
 
