@@ -76,7 +76,7 @@ O schema de referência do contrato v1 está em [packages/autofill/contracts/v1/
 
 ## Status
 
-A beta [`v0.1.0`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.0) está publicada no CDN e na GitHub Release. Os pacotes npm ainda aguardam a configuração de Trusted Publishing; até lá, integre uma versão exata pelo CDN. A API e o produto continuam em beta e não devem ser assumidos como estáveis.
+A versão [`v0.1.0`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.0) está publicada no CDN e na GitHub Release. O Autofill está disponível para todas as contas Consulta, respeitando a franquia do plano em cada decode. Os pacotes npm ainda aguardam a configuração de Trusted Publishing; até lá, integre uma versão exata pelo CDN. O protocolo v0.1 continua em evolução e não deve ser assumido como estável.
 
 ## Licença
 

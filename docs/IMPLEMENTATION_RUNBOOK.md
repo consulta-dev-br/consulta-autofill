@@ -109,5 +109,6 @@ O Autofill só está pronto para um parceiro real quando a ponte server-to-serve
 foi revisada na stack escolhida, o projeto privado autoriza a origem HTTPS
 exata, a release exata foi publicada pelos três canais aprovados, o CDN passou
 o smoke test, a CSP/Permissions Policy está configurada e a matriz de
-compatibilidade exigida foi concluída. Até lá, mantenha o uso em demonstração
-ou beta controlado.
+compatibilidade exigida foi concluída. A disponibilidade para todas as contas
+não substitui esses critérios: até concluí-los, mantenha cada integração real
+em piloto controlado pela origem autorizada do projeto.
