@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const embedDirectory = resolve(import.meta.dirname, "..");
@@ -20,11 +20,13 @@ if (/\b(?:src|href)="\/(?!\/)/.test(index)) {
   throw new Error("O HTML do embed contém um asset absoluto e não pode ser hospedado sob um path versionado.");
 }
 
-const script = readFileSync(scriptPath, "utf8");
-if (!script.includes("../zxing_reader.wasm") || /new URL\([^)]*window\.location\.origin/.test(script)) {
+const assetScripts = readdirSync(resolve(distributionDirectory, "assets"))
+  .filter((entry) => entry.endsWith(".js"))
+  .map((entry) => readFileSync(resolve(distributionDirectory, "assets", entry), "utf8"));
+if (!assetScripts.some((source) => source.includes("../zxing_reader.wasm")) || assetScripts.some((source) => /new URL\([^)]*window\.location\.origin/.test(source))) {
   throw new Error("O bundle do embed não resolve o baseline WASM em relação ao módulo versionado.");
 }
-if (/new URL\(`?\/assets\//.test(script)) {
+if (assetScripts.some((source) => /new URL\(`?\/assets\//.test(source))) {
   throw new Error("O bundle do embed contém um Worker ou asset absoluto fora do path versionado.");
 }
 

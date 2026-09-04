@@ -134,6 +134,17 @@ export interface AutofillEmbedBranding {
   show_powered_by: boolean;
 }
 
+/** Server-owned density preference for the hosted scanner's source selector. */
+export type AutofillEmbedPresentationLayout = "compact" | "standard";
+
+/**
+ * Display-only configuration delivered by the authenticated iframe bootstrap.
+ * It is intentionally not accepted from the partner browser integration.
+ */
+export interface AutofillEmbedPresentation {
+  layout: AutofillEmbedPresentationLayout;
+}
+
 /** Internal hosted-frame bootstrap contract; it never travels through the partner browser API. */
 export interface AutofillEmbedBootstrap {
   protocol_version: typeof AUTOFILL_PROTOCOL_VERSION;
@@ -143,6 +154,8 @@ export interface AutofillEmbedBootstrap {
   allowed_document_types: AutofillDecodedDocumentType[];
   photo_enabled: boolean;
   branding: AutofillEmbedBranding;
+  /** Omitted by older servers; hosted embeds safely default to compact. */
+  presentation?: AutofillEmbedPresentation;
 }
 
 /** Request sent by the component to the partner after the embed extracts QR bytes. */

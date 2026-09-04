@@ -147,6 +147,7 @@ test("renders a server-authorized partner brand without accepting browser brandi
             accent_color: "#7C3AED",
             show_powered_by: false,
           },
+          presentation: { layout: "standard" },
         },
       }),
     });
@@ -192,6 +193,8 @@ test("renders a server-authorized partner brand without accepting browser brandi
 
   const frame = page.frameLocator("#partner-brand");
   await expect(frame.getByRole("heading", { name: "Como prefere ler o documento?" })).toBeVisible();
+  await expect(frame.locator(".actions-compact")).toHaveCount(0);
+  await expect(frame.getByText("Aponte a câmera para o QR Code do documento.", { exact: true })).toBeVisible();
   await expect(frame.getByText("Cadastros Acme", { exact: true })).toBeVisible();
   await expect(frame.getByText("Powered by consulta.dev.br", { exact: true })).toBeHidden();
   await expect(frame.locator(".mark")).toHaveCSS("background-color", "rgb(124, 58, 237)");

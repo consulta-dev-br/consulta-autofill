@@ -30,6 +30,7 @@ test("loads the production embed and Worker below an immutable version path", as
           expires_at: new Date(Date.now() + 60_000).toISOString(),
           allowed_document_types: ["cnh-e"],
           photo_enabled: false,
+          presentation: { layout: "compact" },
         },
       }),
     });
@@ -68,6 +69,12 @@ test("loads the production embed and Worker below an immutable version path", as
 
   const frame = page.frameLocator("#versioned-embed");
   await expect(frame.getByRole("heading", { name: "Como prefere ler o documento?" })).toBeVisible();
+  await expect(frame.locator(".actions-compact")).toBeVisible();
+  await page.waitForTimeout(100);
+  expect(requestedPaths.some((path) => /^\/embed\/v0\.0\.0\/assets\/qr-worker-[A-Za-z0-9_-]+\.js$/.test(path))).toBe(false);
+  expect(requestedPaths.some((path) => /zxing_reader-[A-Za-z0-9_-]+\.wasm$/.test(path))).toBe(false);
+
+  await frame.getByRole("button", { name: /Usar câmera/ }).click();
   await expect.poll(() => requestedPaths.some((path) => /^\/embed\/v0\.0\.0\/assets\/qr-worker-[A-Za-z0-9_-]+\.js$/.test(path))).toBe(true);
   expect(failedPaths).toEqual([]);
 });

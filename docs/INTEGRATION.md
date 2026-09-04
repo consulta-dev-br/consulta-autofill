@@ -76,10 +76,11 @@ marca vem exclusivamente da configuração segura do projeto no servidor:
 - Free e Starter mostram `Consulta Autofill` e `Powered by consulta.dev.br`.
 - Pro e Enterprise podem definir nome e cor de destaque por projeto.
 
-O iframe recebe somente a configuração de exibição no bootstrap autenticado;
-nem o componente, nem o endpoint do parceiro aceitam uma escolha de marca do
-browser. Isso mantém a chave, o plano e a regra comercial fora da página do
-cliente.
+O iframe recebe somente a configuração de exibição no bootstrap autenticado.
+Além da marca, o projeto pode escolher a apresentação compacta (grade de
+ícones e rótulos curtos) ou detalhada. Nem o componente, nem o endpoint do
+parceiro aceitam uma escolha de marca ou layout do browser. Isso mantém a
+chave, o plano e a regra comercial fora da página do cliente.
 
 O controle deve ser filho direto do componente. Ele continua sendo um `input`, `textarea` ou `select` normal no DOM do parceiro: validação nativa, `FormData`, máscaras e bindings de framework permanecem funcionando. Após a revisão, o Autofill ainda pode preencher os demais campos mapeados do mesmo formulário.
 

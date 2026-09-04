@@ -24,7 +24,7 @@ permissão de câmera, QR, decode, confirmação e preenchimento) ao painel
 Consulta. Essa ponte também passa pelo seu backend e não inclui documento,
 campo, valor, imagem, QR, IP ou identidade do usuário final.
 
-Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br` no iframe. Pro e Enterprise podem configurar nome e cor por projeto; essa configuração é resolvida pelo bootstrap autenticado, nunca por atributo ou payload vindo do browser.
+Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br` no iframe. Pro e Enterprise podem configurar nome e cor por projeto; a apresentação compacta ou detalhada também é escolhida por projeto. Essas configurações são resolvidas pelo bootstrap autenticado, nunca por atributo ou payload vindo do browser.
 
 ## Pacotes
 

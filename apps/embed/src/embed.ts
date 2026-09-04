@@ -7,10 +7,9 @@ import {
   type AutofillEmbedMetricEvent,
   type AutofillFrameMessage,
 } from "@consulta-dev/autofill/protocol";
-import { AnnotationMode, getDocument, GlobalWorkerOptions } from "pdfjs-dist/build/pdf.mjs";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "./embed.css";
-import { EmbedQrScanner } from "./qr-scanner.js";
+import type { EmbedQrScanner } from "./qr-scanner.js";
+import type * as PdfJs from "pdfjs-dist/build/pdf.mjs";
 import { MAX_QR_PIXELS } from "./qr-worker-protocol.js";
 
 const PROJECT_ID_PATTERN = /^pub_[A-Za-z0-9_-]{8,128}$/;
@@ -32,6 +31,7 @@ type BootstrapConfig = {
   expiresAt: string;
   photoEnabled: boolean;
   branding: BootstrapBranding;
+  presentation: BootstrapPresentation;
 };
 type BootstrapBranding = {
   mode: "consulta" | "partner";
@@ -39,6 +39,8 @@ type BootstrapBranding = {
   accentColor: string;
   showPoweredBy: boolean;
 };
+type BootstrapPresentation = { layout: "compact" | "standard" };
+type PdfJsModule = typeof PdfJs;
 type DecodedResult = {
   document: AutofillDecodedDocument;
   fields: Record<string, string>;
@@ -127,6 +129,10 @@ function bootstrapBranding(value: unknown): BootstrapBranding {
   return consultaBranding();
 }
 
+function bootstrapPresentation(value: unknown): BootstrapPresentation {
+  return isRecord(value) && value.layout === "standard" ? { layout: "standard" } : { layout: "compact" };
+}
+
 function accentForeground(accentColor: string): string {
   const red = Number.parseInt(accentColor.slice(1, 3), 16);
   const green = Number.parseInt(accentColor.slice(3, 5), 16);
@@ -179,6 +185,7 @@ function bootstrapConfig(value: unknown, query: EmbedQuery, sessionId: string): 
     expiresAt: data.expires_at,
     photoEnabled: data.photo_enabled,
     branding: bootstrapBranding(data.branding),
+    presentation: bootstrapPresentation(data.presentation),
   };
 }
 
@@ -216,12 +223,11 @@ function fieldLabel(key: string): string {
 }
 
 class EmbedController {
-  private readonly engine = new EmbedQrScanner({
-    baselineWasmUrl: readerWasmUrl,
-    ...(qrOnlyModuleUrl && qrOnlyWasmUrl ? { qrOnlyModuleUrl, qrOnlyWasmUrl } : {}),
-  });
   private readonly panel: HTMLElement;
   private readonly status: HTMLElement;
+  private engine: EmbedQrScanner | null = null;
+  private enginePromise: Promise<EmbedQrScanner> | null = null;
+  private pdfPromise: Promise<PdfJsModule> | null = null;
   private port: MessagePort | null = null;
   private sessionId: string | null = null;
   private config: BootstrapConfig | null = null;
@@ -240,7 +246,7 @@ class EmbedController {
     private readonly query: EmbedQuery,
   ) {
     root.innerHTML = `
-      <section class="shell"><header><div class="brand"><span class="mark">✓</span><span class="brand-name">Consulta Autofill</span></div><button type="button" class="close" aria-label="Fechar">×</button></header><main><section class="panel" aria-live="polite"></section></main><p class="powered">Powered by consulta.dev.br</p><p class="status" role="status" aria-live="polite"></p></section>`;
+      <section class="shell"><header><div class="brand"><span class="mark">✓</span><span class="brand-name">Consulta Autofill</span></div><button type="button" class="close" aria-label="Fechar">×</button></header><main class="embed-body"><section class="panel" aria-live="polite"></section></main><p class="powered">Powered by consulta.dev.br</p><p class="status" role="status" aria-live="polite"></p></section>`;
     const panel = root.querySelector<HTMLElement>(".panel");
     const status = root.querySelector<HTMLElement>(".status");
     if (!panel || !status) throw new Error("Não foi possível inicializar o Autofill.");
@@ -250,7 +256,6 @@ class EmbedController {
   }
 
   init(): void {
-    GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
     window.addEventListener("message", this.receiveWindowMessage);
     this.loading("Conectando ao Autofill", "Aguardando a sessão segura do seu cadastro…");
     this.announceReady();
@@ -323,14 +328,23 @@ class EmbedController {
     this.stopCamera();
     this.clearResult();
     this.clearPayload();
-    const card = this.card("Como prefere ler o documento?", "O QR Code é lido neste dispositivo. Seus dados só seguem para validação após sua confirmação.");
-    const actions = document.createElement("div"); actions.className = "actions";
-    actions.append(
-      this.option("◉", "Usar câmera", "Aponte a câmera para o QR Code do documento.", () => void this.startCamera()),
-      this.option("▧", "Enviar imagem", "JPG, PNG ou WebP com o QR Code visível.", () => this.filePicker("image/*")),
-      this.option("▤", "Enviar PDF", "Lemos até as três primeiras páginas do documento.", () => this.filePicker("application/pdf")),
+    const compact = this.config.presentation.layout === "compact";
+    const card = this.card(
+      "Como prefere ler o documento?",
+      compact
+        ? "Escolha uma opção para encontrar o QR Code."
+        : "O QR Code é lido neste dispositivo. Seus dados só seguem para validação após sua confirmação.",
     );
-    const notice = document.createElement("div"); notice.className = "notice"; notice.textContent = "🔒 A câmera só é ativada após seu toque. O componente não envia imagens, QR Codes ou dados para analytics.";
+    const actions = document.createElement("div"); actions.className = compact ? "actions actions-compact" : "actions";
+    actions.append(
+      this.option("◉", "Usar câmera", "Aponte a câmera para o QR Code do documento.", () => void this.startCamera(), compact),
+      this.option("▧", "Enviar imagem", "JPG, PNG ou WebP com o QR Code visível.", () => this.filePicker("image/*"), compact),
+      this.option("▤", "Enviar PDF", "Lemos até as três primeiras páginas do documento.", () => this.filePicker("application/pdf"), compact),
+    );
+    const notice = document.createElement("div"); notice.className = "notice";
+    notice.textContent = compact
+      ? "🔒 A câmera só é ativada após seu toque. Nada é enviado para analytics."
+      : "🔒 A câmera só é ativada após seu toque. O componente não envia imagens, QR Codes ou dados para analytics.";
     card.append(actions, notice); this.panel.replaceChildren(card);
   }
 
@@ -346,15 +360,27 @@ class EmbedController {
     card.append(camera, actions); this.panel.replaceChildren(card); this.video = video;
     this.setStatus("Solicitando acesso à câmera…");
     this.metric("camera_requested");
+    // Start the scanner before the permission prompt resolves. ZXing/WASM can
+    // initialize while the person decides, so the first camera frame is ready
+    // to scan as soon as permission is granted. This uses no camera pixels.
+    const scannerReady = this.prepareScanner();
+    // Observe a late Worker error if permission is denied before preparation
+    // completes. The awaited path below still receives the original failure.
+    void scannerReady.catch(() => {});
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
       if (this.disposed || !this.video) return stream.getTracks().forEach((track) => track.stop());
-      this.stream = stream; this.video.srcObject = stream; await this.video.play(); this.looping = true; this.metric("camera_granted");
+      this.stream = stream; this.video.srcObject = stream; await this.video.play();
+      await scannerReady;
+      if (this.disposed || this.video !== video || this.stream !== stream) return stream.getTracks().forEach((track) => track.stop());
+      this.looping = true; this.metric("camera_granted");
       this.setStatus("Procurando o QR Code…"); this.schedule(250);
     } catch (cause) {
+      if (stream && this.stream !== stream) stream.getTracks().forEach((track) => track.stop());
       const denied = cause instanceof DOMException && (cause.name === "NotAllowedError" || cause.name === "SecurityError");
       if (denied) this.metric("camera_denied");
-      this.error(denied ? "A câmera foi bloqueada. Você pode enviar uma imagem ou PDF." : "Não foi possível iniciar a câmera.");
+      this.error(denied ? "A câmera foi bloqueada. Você pode enviar uma imagem ou PDF." : "Não foi possível iniciar a câmera ou preparar o leitor QR.");
     }
   }
 
@@ -389,9 +415,69 @@ class EmbedController {
     context.drawImage(this.video, 0, 0, width, height); const image = context.getImageData(0, 0, width, height); canvas.width = 1; canvas.height = 1; return image;
   }
 
+  /** Lazily imports the QR reader so opening the source selector stays small. */
+  private async scanner(): Promise<EmbedQrScanner> {
+    if (this.engine) return this.engine;
+    if (!this.enginePromise) {
+      this.enginePromise = import("./qr-scanner.js")
+        .then(({ EmbedQrScanner }) => {
+          const scanner = new EmbedQrScanner({
+            baselineWasmUrl: readerWasmUrl,
+            ...(qrOnlyModuleUrl && qrOnlyWasmUrl ? { qrOnlyModuleUrl, qrOnlyWasmUrl } : {}),
+          });
+          if (this.disposed) {
+            scanner.dispose();
+            throw new Error("O leitor QR foi descartado.");
+          }
+          this.engine = scanner;
+          return scanner;
+        })
+        .catch((cause) => {
+          this.enginePromise = null;
+          throw cause;
+        });
+    }
+    return this.enginePromise;
+  }
+
+  private async prepareScanner(): Promise<EmbedQrScanner> {
+    const scanner = await this.scanner();
+    try {
+      await scanner.prepare();
+      return scanner;
+    } catch (cause) {
+      if (this.engine === scanner) {
+        scanner.dispose();
+        this.engine = null;
+        this.enginePromise = null;
+      }
+      throw cause;
+    }
+  }
+
+  /** Loads PDF.js only when someone selects a PDF instead of adding it to boot. */
+  private async pdfjs(): Promise<PdfJsModule> {
+    if (!this.pdfPromise) {
+      this.pdfPromise = Promise.all([
+        import("pdfjs-dist/build/pdf.mjs"),
+        import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
+      ])
+        .then(([pdfjs, worker]) => {
+          pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+          return pdfjs;
+        })
+        .catch((cause) => {
+          this.pdfPromise = null;
+          throw cause;
+        });
+    }
+    return this.pdfPromise;
+  }
+
   private async scanImage(image: ImageData): Promise<Uint8Array | null> {
     try {
-      return await this.engine.scan(image);
+      const scanner = await this.prepareScanner();
+      return await scanner.scan(image);
     } finally {
       // The Worker owns the transferred buffer after postMessage; in the
       // compatibility path this clears the main-thread copy instead.
@@ -472,6 +558,8 @@ class EmbedController {
   }
 
   private async scanPdf(file: File): Promise<Uint8Array | null> {
+    this.setStatus("Preparando o leitor de PDF…");
+    const { AnnotationMode, getDocument } = await this.pdfjs();
     const bytes = new Uint8Array(await file.arrayBuffer());
     const task = getDocument({ data: bytes, stopAtErrors: true, disableFontFace: true, enableXfa: false, maxImageSize: MAX_RENDER_EDGE * MAX_RENDER_EDGE });
     try {
@@ -563,8 +651,23 @@ class EmbedController {
     if (powered) powered.hidden = !branding.showPoweredBy;
   }
 
-  private option(icon: string, title: string, text: string, action: () => void): HTMLButtonElement {
-    const button = document.createElement("button"); button.type = "button"; button.className = "option"; const symbol = document.createElement("span"); symbol.className = "icon"; symbol.textContent = icon; const copy = document.createElement("span"); const heading = document.createElement("strong"); heading.textContent = title; const description = document.createElement("span"); description.textContent = text; copy.append(heading, description); const arrow = document.createElement("span"); arrow.className = "arrow"; arrow.textContent = "›"; button.append(symbol, copy, arrow); button.addEventListener("click", action); return button;
+  private option(icon: string, title: string, text: string, action: () => void, compact = false): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = compact ? "option option-compact" : "option";
+    button.setAttribute("aria-label", `${title}. ${text}`);
+    button.title = text;
+    const symbol = document.createElement("span"); symbol.className = "icon"; symbol.textContent = icon;
+    const copy = document.createElement("span"); const heading = document.createElement("strong"); heading.textContent = title; copy.append(heading);
+    if (!compact) {
+      const description = document.createElement("span"); description.textContent = text; copy.append(description);
+      const arrow = document.createElement("span"); arrow.className = "arrow"; arrow.textContent = "›";
+      button.append(symbol, copy, arrow);
+    } else {
+      button.append(symbol, copy);
+    }
+    button.addEventListener("click", action);
+    return button;
   }
 
   private button(label: string, kind: "primary" | "secondary", action: () => void): HTMLButtonElement {
@@ -592,7 +695,7 @@ class EmbedController {
 
   private shutdown(): void {
     if (this.disposed) return;
-    this.disposed = true; window.removeEventListener("message", this.receiveWindowMessage); this.stopCamera(); this.clearPayload(); this.clearResult(); this.port?.close(); this.port = null; this.engine.dispose(); this.panel.replaceChildren(this.card("Scanner fechado", "Você pode fechar esta janela e voltar ao cadastro.")); this.setStatus("Scanner fechado.");
+    this.disposed = true; window.removeEventListener("message", this.receiveWindowMessage); this.stopCamera(); this.clearPayload(); this.clearResult(); this.port?.close(); this.port = null; this.engine?.dispose(); this.engine = null; this.panel.replaceChildren(this.card("Scanner fechado", "Você pode fechar esta janela e voltar ao cadastro.")); this.setStatus("Scanner fechado.");
   }
 
   private setStatus(text: string): void { this.status.textContent = text; }
