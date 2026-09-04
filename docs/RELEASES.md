@@ -18,7 +18,7 @@ pnpm release:verify
 Ela produz, em `.release-artifacts/` ou em `CONSULTA_RELEASE_OUTPUT_DIR` vazio:
 
 - tarballs exatos de `@consulta-dev/autofill` e `@consulta-dev/qr-engine`;
-- assets versionados do CDN, inclusive `autofill/v0.1.0/consulta-autofill.min.js` e o shell do embed;
+- assets versionados do CDN, inclusive `autofill/v0.1.0/consulta-autofill.min.js`, seus módulos ES relativos (como `protocol.js`) e o shell do embed;
 - `release-manifest.json` com SHA-256, tipo MIME, SRI e o commit/tag de origem dos assets;
 - `SHA256SUMS` e um SBOM CycloneDX 1.5;
 - prova de que os bytes JavaScript copiados ao CDN são os mesmos arquivos dentro dos tarballs npm.

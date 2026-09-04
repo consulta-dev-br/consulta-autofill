@@ -21,14 +21,14 @@ const packages = [
   {
     name: "@consulta-dev/autofill",
     directory: resolve(workspaceDirectory, "packages", "autofill"),
-    source: "dist/index.js",
+    entry: "dist/index.js",
     cdnPath: "autofill",
     cdnFilename: "consulta-autofill.min.js",
   },
   {
     name: "@consulta-dev/qr-engine",
     directory: resolve(workspaceDirectory, "packages", "qr-engine"),
-    source: "dist/index.js",
+    entry: "dist/index.js",
     cdnPath: "qr-engine",
     cdnFilename: "consulta-qr-engine.min.js",
   },
@@ -93,6 +93,39 @@ function filesIn(directory) {
     else paths.push(path);
   }
   return paths;
+}
+
+/**
+ * A browser-facing entry can import another emitted ES module. Publish every
+ * JavaScript module from dist, preserving its relative path, so imports such
+ * as `./protocol.js` resolve beside the canonical CDN entrypoint. The package
+ * tarball remains the source of truth for every byte copied to the CDN.
+ */
+function browserModuleAssets(definition) {
+  const distributionDirectory = resolve(definition.directory, "dist");
+  const assets = filesIn(distributionDirectory)
+    .filter((path) => /\.(?:m?js)$/.test(path))
+    .map((path) => {
+      const source = relative(definition.directory, path).split(sep).join("/");
+      const relativeDistributionPath = relative(distributionDirectory, path).split(sep).join("/");
+      if (
+        !source.startsWith("dist/") ||
+        !relativeDistributionPath ||
+        relativeDistributionPath.startsWith("../") ||
+        relativeDistributionPath.split("/").some((component) => !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(component))
+      ) {
+        throw new Error(`O módulo de browser de ${definition.name} tem um caminho de saída inválido.`);
+      }
+      return {
+        source,
+        filename: source === definition.entry ? definition.cdnFilename : relativeDistributionPath,
+      };
+    });
+
+  if (!assets.some((asset) => asset.source === definition.entry)) {
+    throw new Error(`A entrada de browser de ${definition.name} não foi gerada em dist.`);
+  }
+  return assets;
 }
 
 function run(command, args) {
@@ -203,28 +236,31 @@ const components = [];
 for (const definition of packages) {
   const manifest = readJson(resolve(definition.directory, "package.json"));
   assertReleasePackageManifest(definition, manifest, source);
-  const sourcePath = resolve(definition.directory, definition.source);
-  if (!existsSync(sourcePath)) throw new Error(`Build ausente para ${definition.name}: ${sourcePath}. Execute pnpm build antes da release.`);
   const archivePath = packPackage(definition);
   const packedManifest = tarballPackageManifest(archivePath);
   if (packedManifest.name !== manifest.name || packedManifest.version !== manifest.version) {
     throw new Error(`O tarball de ${definition.name} não preserva o nome e a versão aprovados.`);
   }
-  const cdnPath = resolve(cdnDirectory, definition.cdnPath, `v${releaseVersion}`, definition.cdnFilename);
-  mkdirSync(resolve(cdnPath, ".."), { recursive: true, mode: 0o700 });
-  cpSync(sourcePath, cdnPath);
 
-  const sourceBytes = readFileSync(sourcePath);
-  const packed = tarballFile(archivePath, definition.source);
-  if (!sourceBytes.equals(packed)) {
-    throw new Error(`Os bytes publicados no CDN divergem de ${definition.name}/${definition.source} dentro do tarball.`);
+  for (const asset of browserModuleAssets(definition)) {
+    const sourcePath = resolve(definition.directory, asset.source);
+    const cdnPath = resolve(cdnDirectory, definition.cdnPath, `v${releaseVersion}`, asset.filename);
+    mkdirSync(resolve(cdnPath, ".."), { recursive: true, mode: 0o700 });
+    cpSync(sourcePath, cdnPath);
+
+    const sourceBytes = readFileSync(sourcePath);
+    const packed = tarballFile(archivePath, asset.source);
+    if (!sourceBytes.equals(packed)) {
+      throw new Error(`Os bytes publicados no CDN divergem de ${definition.name}/${asset.source} dentro do tarball.`);
+    }
+
+    const cdnInfo = fileInfo(cdnPath);
+    cdnAssets.push({ path: relativePath(cdnPath), content_type: "application/javascript; charset=utf-8", ...cdnInfo });
+    equivalences.push({ package: definition.name, tarball_path: relativePath(archivePath), tarball_member: `package/${asset.source}`, cdn_path: relativePath(cdnPath), sha256: cdnInfo.sha256 });
   }
 
   const archiveInfo = fileInfo(archivePath);
-  const cdnInfo = fileInfo(cdnPath);
   packageRecords.push({ name: definition.name, version: manifest.version, path: relativePath(archivePath), ...archiveInfo });
-  cdnAssets.push({ path: relativePath(cdnPath), content_type: "application/javascript; charset=utf-8", ...cdnInfo });
-  equivalences.push({ package: definition.name, tarball_path: relativePath(archivePath), tarball_member: `package/${definition.source}`, cdn_path: relativePath(cdnPath), sha256: cdnInfo.sha256 });
   components.push(packageComponent(definition.name, manifest), ...dependencyComponents(manifest));
 }
 

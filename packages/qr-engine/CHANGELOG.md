@@ -1,5 +1,11 @@
 # @consulta-dev/qr-engine
 
+## 0.1.1
+
+### Patch Changes
+
+- Inclui todos os módulos JavaScript necessários ao entrypoint em cada release imutável do CDN.
+
 ## 0.1.0
 
 ### Minor Changes
