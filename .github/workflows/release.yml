@@ -83,6 +83,9 @@ jobs:
           path: .release-artifacts
           if-no-files-found: error
           retention-days: 14
+          # The verified release collection intentionally lives in a dot
+          # directory. upload-artifact v6 excludes hidden paths by default.
+          include-hidden-files: true
 
   publish-npm:
     name: Publish verified npm tarballs
