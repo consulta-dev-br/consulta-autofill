@@ -1,6 +1,6 @@
 {
   "name": "@consulta-dev/qr-engine",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Browser QR extraction interface for Consulta Autofill.",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,13 +17,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antoniobezerra/consulta.dev.br.git",
+    "url": "git+https://github.com/consulta-dev-br/consulta-autofill.git",
     "directory": "packages/qr-engine"
   },
   "bugs": {
-    "url": "https://github.com/antoniobezerra/consulta.dev.br/issues"
+    "url": "https://github.com/consulta-dev-br/consulta-autofill/issues"
   },
-  "homepage": "https://github.com/antoniobezerra/consulta.dev.br#readme",
+  "homepage": "https://github.com/consulta-dev-br/consulta-autofill#readme",
   "publishConfig": {
     "access": "public"
   },

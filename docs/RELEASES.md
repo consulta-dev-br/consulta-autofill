@@ -11,14 +11,14 @@ suportado para npm, GitHub Release e CDN.
 Depois de `pnpm build`, a coleção é preparada por uma única execução, sem publicar nada:
 
 ```bash
-CONSULTA_RELEASE_VERSION=1.0.0 pnpm release:prepare
+CONSULTA_RELEASE_VERSION=0.1.0 pnpm release:prepare
 pnpm release:verify
 ```
 
 Ela produz, em `.release-artifacts/` ou em `CONSULTA_RELEASE_OUTPUT_DIR` vazio:
 
 - tarballs exatos de `@consulta-dev/autofill` e `@consulta-dev/qr-engine`;
-- assets versionados do CDN, inclusive `autofill/v1.0.0/consulta-autofill.min.js` e o shell do embed;
+- assets versionados do CDN, inclusive `autofill/v0.1.0/consulta-autofill.min.js` e o shell do embed;
 - `release-manifest.json` com SHA-256, tipo MIME, SRI e o commit/tag de origem dos assets;
 - `SHA256SUMS` e um SBOM CycloneDX 1.5;
 - prova de que os bytes JavaScript copiados ao CDN são os mesmos arquivos dentro dos tarballs npm.
@@ -76,7 +76,7 @@ Antes de apontar `embed.consulta.dev.br`, siga o [contrato de deploy do shell](E
 
 ## Publicação R2/CDN
 
-O job manual **Publish verified immutable CDN assets** só executa quando `publish_cdn=true` for selecionado na workflow **Release artifacts**. Ele baixa o mesmo artefato preparado para npm/GitHub Release, repete `release:verify` e usa a API S3 compatível do R2 para publicar somente caminhos de versão exata, como `embed/v1.0.0/assets/consulta-embed.js`.
+O job manual **Publish verified immutable CDN assets** só executa quando `publish_cdn=true` for selecionado na workflow **Release artifacts**. Ele baixa o mesmo artefato preparado para npm/GitHub Release, repete `release:verify` e usa a API S3 compatível do R2 para publicar somente caminhos de versão exata, como `embed/v0.1.0/assets/consulta-embed.js`.
 
 Cada `PUT` usa `If-None-Match: *`, `Content-Type`, `Content-MD5`, o cache imutável e metadados de release/SHA-256. Portanto, uma chave já existente não é sobrescrita: uma nova execução só prossegue se o objeto existente tiver exatamente os bytes e metadados esperados. Em seguida, o job lê cada objeto do R2 e do domínio público, confere bytes, `Content-Type`, `Cache-Control` e CORS. Uma falha deixa a versão sem promoção; não regrave nem delete a versão — publique uma nova versão semver.
 
@@ -91,7 +91,7 @@ Antes da primeira execução, configure a infraestrutura fora deste repositório
 Para ensaiar uma coleção local sem tocar no R2, prepare os artefatos e execute o publicador com `--dry-run`. O comando ainda exige os três valores de destino para validar a configuração, mas não exige credenciais S3 nem faz rede:
 
 ```bash
-CONSULTA_RELEASE_VERSION=1.0.0 pnpm release:prepare
+CONSULTA_RELEASE_VERSION=0.1.0 pnpm release:prepare
 CONSULTA_RELEASE_OUTPUT_DIR=.release-artifacts \
 CONSULTA_R2_ACCOUNT_ID=0123456789abcdef0123456789abcdef \
 CONSULTA_R2_BUCKET=consulta-autofill-assets \

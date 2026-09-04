@@ -74,10 +74,10 @@ imutável, valide sua integridade e só então mova o alias.
 ### Layout da release do embed
 
 O build do embed é propositalmente relativo e precisa ser publicado sob uma
-versão exata, por exemplo `https://cdn.consulta.dev.br/embed/v1.0.0/`:
+versão exata, por exemplo `https://cdn.consulta.dev.br/embed/v0.1.0/`:
 
 ```text
-embed/v1.0.0/
+embed/v0.1.0/
 ├── index.html
 ├── zxing_reader.wasm
 └── assets/
@@ -92,7 +92,7 @@ estáveis acima, e incluir seus valores `sha384-...` de SRI extraídos do
 `release-manifest.json`. A configuração correspondente é:
 
 ```text
-AUTOFILL_EMBED_ASSET_BASE_URL=https://cdn.consulta.dev.br/embed/v1.0.0/
+AUTOFILL_EMBED_ASSET_BASE_URL=https://cdn.consulta.dev.br/embed/v0.1.0/
 AUTOFILL_EMBED_SCRIPT_INTEGRITY=sha384-...
 AUTOFILL_EMBED_STYLESHEET_INTEGRITY=sha384-...
 ```
