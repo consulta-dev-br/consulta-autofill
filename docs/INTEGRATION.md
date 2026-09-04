@@ -2,7 +2,7 @@
 
 O Consulta Autofill preenche formulários a partir de CNH-e e CRLV-e sem colocar a API key no navegador. O componente abre um iframe oficial para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
 
-> A beta [`v0.1.1`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.1) está disponível pelo CDN oficial e pela GitHub Release. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
+> A beta [`v0.1.2`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.2) está disponível pelo CDN oficial e pela GitHub Release. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
 
 ## 1. Configure o servidor do parceiro
 
@@ -47,8 +47,8 @@ Carregue uma versão exata pelo CDN oficial. Quando os pacotes npm estiverem dis
 ```html
 <script
   type="module"
-  src="https://cdn.consulta.dev.br/autofill/v0.1.1/consulta-autofill.min.js"
-  integrity="sha384-<valor-do-release-manifest>"
+  src="https://cdn.consulta.dev.br/autofill/v0.1.2/consulta-autofill.min.js"
+  integrity="sha384-3O/rTbtafuej65QzECtswT1FGT8cwbdOtbzUlOf70cjouSXUahNTRGH+ZD8YbM8t"
   crossorigin="anonymous"></script>
 ```
 
