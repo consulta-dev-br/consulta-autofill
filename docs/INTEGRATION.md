@@ -2,7 +2,7 @@
 
 O Consulta Autofill preenche formulários a partir de CNH-e e CRLV-e sem colocar a API key no navegador. O componente abre um iframe oficial para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
 
-> A beta [`v0.1.0`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.0) está disponível pelo CDN oficial e pela GitHub Release. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
+> A versão [`v0.1.0`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.0) está disponível pelo CDN oficial e pela GitHub Release. Todas as contas Consulta podem criar projetos e usar o Autofill dentro da franquia do seu plano. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
 
 ## 1. Configure o servidor do parceiro
 
@@ -240,6 +240,6 @@ Erros têm formato estável:
 - Mostre nova tentativa para `QR_NOT_FOUND`, `CAMERA_DENIED` e `CAMERA_UNAVAILABLE`.
 - Respeite `429`/`RATE_LIMITED`; não faça retry automático em loop.
 - Trate `UPSTREAM_UNAVAILABLE` como erro temporário e guarde apenas `request_id` para suporte.
-- `AUTOFILL_BETA_REQUIRED` não é recuperável pelo navegador: o titular da conta deve ser aprovado para o beta antes de criar projetos ou sessões.
+- `AUTOFILL_BETA_REQUIRED` permanece no contrato v1 para compatibilidade, mas não é retornado no fluxo geral. Se ele aparecer, trate como configuração legada e contate o suporte sem repetir a chamada em loop.
 
 O schema distribuído fica em [`packages/autofill/contracts/v1/autofill.schema.json`](../packages/autofill/contracts/v1/autofill.schema.json).
