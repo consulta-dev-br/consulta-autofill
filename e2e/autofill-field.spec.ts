@@ -123,13 +123,22 @@ test("places an accessible camera trigger in a native field and fills through th
 
   const frame = page.frameLocator('iframe[title="Scanner Consulta Autofill"]');
   await expect(frame.getByRole("heading", { name: "Como prefere ler o documento?" })).toBeVisible();
-  const focusClass = await page.evaluate(() => {
+  const outerDialog = await page.evaluate(() => {
+    const field = document.querySelector<HTMLElement>("consulta-autofill-field");
+    const autofill = field?.shadowRoot?.querySelector<HTMLElement>("consulta-autofill");
+    return {
+      hasHeader: Boolean(autofill?.shadowRoot?.querySelector(".dialog-header")),
+      hasOuterClose: Boolean(autofill?.shadowRoot?.querySelector('button[aria-label="Fechar scanner"]')),
+    };
+  });
+  expect(outerDialog).toEqual({ hasHeader: false, hasOuterClose: false });
+  const focusedTagName = await page.evaluate(() => {
     document.querySelector<HTMLButtonElement>("#outside-focus-target")?.focus();
     const field = document.querySelector<HTMLElement>("consulta-autofill-field");
     const autofill = field?.shadowRoot?.querySelector<HTMLElement>("consulta-autofill");
-    return autofill?.shadowRoot?.activeElement?.className;
+    return autofill?.shadowRoot?.activeElement?.tagName;
   });
-  expect(focusClass).toBe("close");
+  expect(focusedTagName).toBe("IFRAME");
   await expect.poll(async () => page.evaluate(() => {
     const state = window as Window & { __consultaAutofillPort?: MessagePort };
     return Boolean(state.__consultaAutofillPort);
