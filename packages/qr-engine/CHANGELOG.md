@@ -1,5 +1,12 @@
 # @consulta-dev/qr-engine
 
+## 0.1.2
+
+### Patch Changes
+
+- 3c27c31: Remove the redundant outer scanner header and close control so the hosted
+  iframe is presented as a single dialog.
+
 ## 0.1.1
 
 ### Patch Changes

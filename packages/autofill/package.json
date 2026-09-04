@@ -1,6 +1,6 @@
 {
   "name": "@consulta-dev/autofill",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Consulta Autofill web component for document-assisted form completion.",
   "license": "Apache-2.0",
   "type": "module",
