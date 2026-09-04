@@ -30,17 +30,13 @@ const styleText = `
   button { font: inherit; }
   .trigger { display: inline-flex; align-items: center; gap: .5rem; border: 0; border-radius: .7rem; padding: .65rem .9rem; color: white; background: #155eef; cursor: pointer; box-shadow: 0 1px 2px rgb(16 24 40 / .12); }
   .trigger:hover:not(:disabled) { background: #004eeb; }
-  .trigger:focus-visible, .close:focus-visible { outline: 3px solid #84adff; outline-offset: 3px; }
+  .trigger:focus-visible { outline: 3px solid #84adff; outline-offset: 3px; }
   .trigger:disabled { cursor: wait; opacity: .7; }
   .trigger-icon { justify-content: center; width: 2.45rem; height: 2.45rem; padding: .5rem; color: #155eef; background: transparent; box-shadow: none; }
   .trigger-icon:hover:not(:disabled) { background: rgb(21 94 239 / .12); }
   .trigger-icon svg { display: block; }
   .overlay { position: fixed; z-index: 2147483000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(16 24 40 / .58); }
-  .dialog { position: relative; display: grid; grid-template-rows: auto minmax(20rem, 1fr); width: min(100%, 34rem); height: min(100%, 44rem); overflow: hidden; border-radius: 1rem; background: white; box-shadow: 0 24px 48px rgb(16 24 40 / .28); }
-  .dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.5rem; padding: 0 .85rem 0 1rem; border-bottom: 1px solid #eaecf0; }
-  .dialog-title { margin: 0; font-size: 1rem; color: #101828; }
-  .close { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: .5rem; color: #475467; background: transparent; cursor: pointer; }
-  .close:hover { background: #f2f4f7; }
+  .dialog { position: relative; display: grid; width: min(100%, 34rem); height: min(100%, 44rem); overflow: hidden; border-radius: 1rem; background: white; box-shadow: 0 24px 48px rgb(16 24 40 / .28); }
   .loading { display: grid; place-items: center; padding: 2rem; color: #475467; text-align: center; }
   iframe { width: 100%; height: 100%; border: 0; background: white; }
 `;
@@ -274,7 +270,9 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     const content = document.createElement("div");
     content.className = "loading";
     content.textContent = "Preparando o scanner seguro…";
-    overlay.querySelector(".dialog")?.append(content);
+    const dialog = overlay.querySelector<HTMLElement>(".dialog");
+    dialog?.append(content);
+    dialog?.focus();
   }
 
   private createDialog(): HTMLElement {
@@ -289,23 +287,10 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
     dialog.setAttribute("aria-label", "Consulta Autofill");
-    const header = document.createElement("header");
-    header.className = "dialog-header";
-    const title = document.createElement("p");
-    title.className = "dialog-title";
-    title.textContent = "Consulta Autofill";
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "close";
-    close.setAttribute("aria-label", "Fechar scanner");
-    close.textContent = "×";
-    close.addEventListener("click", () => this.close());
-    header.append(title, close);
-    dialog.append(header);
+    dialog.tabIndex = -1;
     overlay.append(dialog);
     this.shadow.append(overlay);
     this.modal = overlay;
-    close.focus();
     return overlay;
   }
 
@@ -345,6 +330,7 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     frame.allow = "camera";
     frame.sandbox.add("allow-scripts", "allow-same-origin");
     frame.referrerPolicy = "no-referrer";
+    frame.addEventListener("load", () => frame.focus(), { once: true });
     const dialog = this.modal.querySelector(".dialog");
     const loading = dialog?.querySelector(".loading");
     loading?.remove();
@@ -633,7 +619,8 @@ export class ConsultaAutofillElement extends HTMLElementBase {
   private readonly handleFocusIn = (event: FocusEvent): void => {
     const modal = this.modal;
     if (!modal || event.composedPath().includes(modal)) return;
-    modal.querySelector<HTMLButtonElement>(".close")?.focus();
+    if (this.iframe) this.iframe.focus();
+    else modal.querySelector<HTMLElement>(".dialog")?.focus();
   };
 }
 
