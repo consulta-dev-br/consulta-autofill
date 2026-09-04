@@ -38,6 +38,8 @@ export type {
   AutofillErrorCode,
   AutofillErrorResponse,
   AutofillEmbedReadyMessage,
+  AutofillEmbedPresentation,
+  AutofillEmbedPresentationLayout,
   AutofillFrameMessage,
   AutofillFrameMessageType,
   AutofillPhoto,

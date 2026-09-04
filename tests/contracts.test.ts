@@ -105,6 +105,7 @@ describe("Autofill v1 JSON Schema", () => {
           accent_color: "#7C3AED",
           show_powered_by: false,
         },
+        presentation: { layout: "compact" },
       },
     };
 
@@ -115,6 +116,10 @@ describe("Autofill v1 JSON Schema", () => {
         ...response.data,
         branding: { ...response.data.branding, show_powered_by: true },
       },
+    })).toBe(false);
+    expect(validate({
+      ...response,
+      data: { ...response.data, presentation: { layout: "icons-only" } },
     })).toBe(false);
   });
 

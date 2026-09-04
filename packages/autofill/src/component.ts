@@ -36,9 +36,13 @@ const styleText = `
   .trigger-icon:hover:not(:disabled) { background: rgb(21 94 239 / .12); }
   .trigger-icon svg { display: block; }
   .overlay { position: fixed; z-index: 2147483000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(16 24 40 / .58); }
-  .dialog { position: relative; display: grid; width: min(100%, 34rem); height: min(100%, 44rem); overflow: hidden; border-radius: 1rem; background: white; box-shadow: 0 24px 48px rgb(16 24 40 / .28); }
+  .dialog { position: relative; display: grid; width: min(100%, 31rem); height: min(100%, 34rem); min-height: 0; overflow: hidden; border-radius: 1rem; background: white; box-shadow: 0 24px 48px rgb(16 24 40 / .28); }
   .loading { display: grid; place-items: center; padding: 2rem; color: #475467; text-align: center; }
-  iframe { width: 100%; height: 100%; border: 0; background: white; }
+  iframe { width: 100%; height: 100%; min-height: 0; border: 0; background: white; }
+  @media (max-width: 34rem) {
+    .overlay { align-items: end; padding: 0; }
+    .dialog { width: 100%; height: min(100%, 34rem); border-radius: 1rem 1rem 0 0; }
+  }
 `;
 
 type FilledDetail = {

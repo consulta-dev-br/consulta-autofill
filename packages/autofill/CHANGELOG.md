@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.3
+
+### Patch Changes
+
+- Compacta o scanner hospedado, carrega QR e PDF sob demanda e prepara o leitor QR enquanto a permissão da câmera é solicitada.
+
 ## 0.1.2
 
 ### Patch Changes

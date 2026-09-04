@@ -84,6 +84,14 @@
         }
       ]
     },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout"],
+      "properties": {
+        "layout": { "type": "string", "enum": ["compact", "standard"] }
+      }
+    },
     "errorCode": {
       "type": "string",
       "enum": [
@@ -228,7 +236,8 @@
           "items": { "$ref": "#/$defs/decodedDocumentType" }
         },
         "photo_enabled": { "type": "boolean" },
-        "branding": { "$ref": "#/$defs/branding" }
+        "branding": { "$ref": "#/$defs/branding" },
+        "presentation": { "$ref": "#/$defs/presentation" }
       }
     },
     "embedBootstrapSuccessResponse": {

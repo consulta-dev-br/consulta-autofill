@@ -21,10 +21,11 @@ O iframe só torna câmera, arquivo e PDF disponíveis depois que:
 
 Mensagens nunca usam `targetOrigin: "*"`.
 
-A marca exibida pelo iframe também não é um atributo do componente nem uma
-escolha enviada pela página parceira. O bootstrap autenticado resolve a marca
-do projeto conforme o plano da conta; uma configuração ausente, inválida ou
-não permitida retorna à experiência `Consulta Autofill` com o crédito visível.
+A marca e a densidade exibidas pelo iframe também não são atributos do
+componente nem escolhas enviadas pela página parceira. O bootstrap autenticado
+resolve a marca conforme o plano e a apresentação `compact` ou `standard` do
+projeto; uma configuração ausente, inválida ou não permitida retorna à
+experiência compacta `Consulta Autofill` com o crédito visível.
 
 ## Domínios
 
@@ -41,7 +42,7 @@ O [contrato de deploy do embed](EMBED_DEPLOYMENT.md) define como calcular a CSP 
 
 O contrato público do engine é `prepare()`, `scan()` e `dispose()`. O baseline é `zxing-wasm`; a versão QR-only baseada em ZXing-C++ só será promovida quando cumprir os gates de tamanho, desempenho, igualdade de bytes e memória definidos no plano privado.
 
-A leitura do embed acontece em um Worker de módulo hospedado pela própria origem do iframe. A thread principal prepara pixels RGBA de câmera, imagem ou PDF e transfere seu `ArrayBuffer` para o Worker; o buffer é apagado no Worker depois da leitura. O retorno contém somente os bytes do QR necessários ao fluxo já existente e é transferido de volta sem imagem, arquivo, foto ou telemetria. Se o Worker não puder concluir o handshake de configuração antes de receber pixels, há fallback de compatibilidade para o leitor principal; um erro durante uma leitura já transferida não migra silenciosamente o documento entre engines.
+A leitura do embed acontece em um Worker de módulo hospedado pela própria origem do iframe. O QR Worker/ZXing é importado somente quando a pessoa escolhe câmera ou imagem; ao pedir a câmera, seu preparo acontece em paralelo ao prompt de permissão, antes de qualquer pixel ser capturado. PDF.js só é importado após a seleção de um PDF. A thread principal prepara pixels RGBA e transfere seu `ArrayBuffer` para o Worker; o buffer é apagado no Worker depois da leitura. O retorno contém somente os bytes do QR necessários ao fluxo já existente e é transferido de volta sem imagem, arquivo, foto ou telemetria. Se o Worker não puder concluir o handshake de configuração antes de receber pixels, há fallback de compatibilidade para o leitor principal; um erro durante uma leitura já transferida não migra silenciosamente o documento entre engines.
 
 Na CI, o E2E também usa os perfis emulados Pixel 7 e iPhone 14 para detectar
 regressões de layout, handshake e Worker em viewport/touch móvel. Essa é
