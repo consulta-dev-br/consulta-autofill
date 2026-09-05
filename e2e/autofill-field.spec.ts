@@ -60,6 +60,22 @@ test("opens one direct card in a native field without an iframe or nested chrome
       body: JSON.stringify({ success: true, data: { accepted: true }, request_id: "req_metric_12345678" }),
     });
   });
+  const decodeBodies: unknown[] = [];
+  await page.route("**/api/consulta-autofill/decode", async (route) => {
+    decodeBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        request_id: "req_decode_12345678",
+        data: {
+          document: { type: "cnh-e", label: "CNH-e" },
+          fields: { full_name: "Pessoa Sintética" },
+          photo: null,
+        },
+      }),
+    });
+  });
 
   await page.goto(`${origin}/`);
   await page.evaluate(async ({ componentUrl, label, evaluatedProjectId }) => {
@@ -133,9 +149,27 @@ test("opens one direct card in a native field without an iframe or nested chrome
     return autofill?.shadowRoot?.activeElement?.tagName;
   })).toBe("BUTTON");
 
+  await page.evaluate(async () => {
+    type ScannerHarness = {
+      imageDataFromFile(file: Blob): Promise<ImageData>;
+      scanImage(image: ImageData): Promise<Uint8Array | null>;
+      scanFile(file: File): Promise<void>;
+    };
+    const field = document.querySelector<HTMLElement>("consulta-autofill-field");
+    const autofill = field?.shadowRoot?.querySelector<HTMLElement>("consulta-autofill");
+    const scanner = (autofill as unknown as { scanner: ScannerHarness }).scanner;
+    scanner.imageDataFromFile = async () => new ImageData(1, 1);
+    scanner.scanImage = async () => Uint8Array.of(1, 2, 3, 4);
+    await scanner.scanFile(new File(["synthetic"], "documento.png", { type: "image/png" }));
+  });
+  await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "QR Code encontrado" })).toHaveCount(0);
+  expect(decodeBodies).toHaveLength(1);
+  expect(decodeBodies[0]).toMatchObject({ include_photo: false });
+
   await page.getByRole("button", { name: "Fechar", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Como prefere ler o documento?" })).toHaveCount(0);
-  await expect.poll(() => metricBodies.map((body) => (body as { event?: string }).event).sort()).toEqual(["closed", "opened"]);
+  await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toHaveCount(0);
+  await expect.poll(() => metricBodies.map((body) => (body as { event?: string }).event).sort()).toEqual(["closed", "decoded", "opened", "qr_found"]);
   const serializedMetrics = JSON.stringify(metricBodies);
   expect(serializedMetrics).not.toContain("full_name");
   expect(serializedMetrics).not.toContain("project_id");

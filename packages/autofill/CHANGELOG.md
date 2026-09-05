@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.7
+
+### Patch Changes
+
+- Consultas iniciam automaticamente assim que o QR Code é encontrado, sem uma etapa intermediária de confirmação.
+
 ## 0.1.6
 
 ### Patch Changes

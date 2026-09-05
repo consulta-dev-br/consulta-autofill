@@ -263,8 +263,7 @@ export class DirectScanner {
         this.payload = payload;
         this.stopCamera();
         this.metric("qr_found");
-        this.setStatus("QR Code encontrado.");
-        return this.confirmPayload();
+        return this.requestDecode(false);
       }
       if (manual) this.setStatus("Ainda não encontramos um QR Code. Aproxime o documento e tente novamente.");
     } catch {
@@ -434,8 +433,7 @@ export class DirectScanner {
       if (!payload) throw new Error("Não encontramos um QR Code neste arquivo.");
       this.payload = payload;
       this.metric("qr_found");
-      this.setStatus("QR Code encontrado.");
-      this.confirmPayload();
+      await this.requestDecode(false);
     } catch (cause) {
       this.error(cause instanceof Error ? cause.message : "Não foi possível ler este arquivo.");
     }
@@ -486,37 +484,6 @@ export class DirectScanner {
       await task.destroy();
       bytes.fill(0);
     }
-  }
-
-  private confirmPayload(): void {
-    if (!this.payload || this.disposed) return;
-    const card = this.card("QR Code encontrado", "Antes de buscar os dados, confirme o que deseja incluir na leitura.");
-    const badge = document.createElement("span");
-    badge.className = "badge";
-    badge.textContent = "✓ QR Code pronto para leitura";
-    card.append(badge);
-    let includePhoto = false;
-    if (this.config.photoEnabled) {
-      const label = document.createElement("label");
-      label.className = "check";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.addEventListener("change", () => {
-        includePhoto = checkbox.checked;
-      });
-      const text = document.createElement("span");
-      text.textContent = "Incluir a foto retornada pelo documento nesta revisão. Esta opção é opcional e fica desmarcada por padrão.";
-      label.append(checkbox, text);
-      card.append(label);
-    }
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    actions.append(
-      this.button("Buscar dados do documento", "primary", () => void this.requestDecode(includePhoto)),
-      this.button("Ler outro documento", "secondary", () => this.options()),
-    );
-    card.append(actions);
-    this.render(card, "QR Code encontrado. Confirme antes de buscar os dados.");
   }
 
   private async requestDecode(includePhoto: boolean): Promise<void> {
