@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.13
+
+### Patch Changes
+
+- Keep long CIN and other official-document reviews compact while preserving every editable field behind an accessible additional-fields disclosure.
+
 ## 0.1.12
 
 ### Patch Changes

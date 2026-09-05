@@ -69,14 +69,23 @@ test("opens one direct card in a native field without an iframe or nested chrome
         success: true,
         request_id: "req_decode_12345678",
         data: {
-          document: { type: "cnh-e", label: "CNH-e" },
+          document: { type: "cin", label: "Carteira de Identidade Nacional" },
           fields: {
             full_name: "Pessoa Sintética",
             cpf: "000.000.000-00",
             datanascimento: "01/02/1990",
-            numeroregistro: "12345678901",
-            categoriahabilitacao: "AB",
-            acc: "Não se aplica",
+            dataemissao: "01/01/2025",
+            sexo: "Não informado",
+            nacionalidade: "Brasileira",
+            naturalidade: "Cidade sintética",
+            validade: "01/01/2035",
+            certidao: "Registro sintético",
+            filiacao_1: "Pessoa responsável um",
+            filiacao_2: "Pessoa responsável dois",
+            hash: "hash-sintetico",
+            local: "Local sintético",
+            nome_social: "",
+            orgao_expedidor: "Órgão sintético",
           },
           photo: {
             mime_type: "image/png",
@@ -88,6 +97,13 @@ test("opens one direct card in a native field without an iframe or nested chrome
   });
 
   await page.goto(`${origin}/`);
+  await page.evaluate(() => {
+    window.addEventListener("consulta:confirmed", (event) => {
+      (window as Window & { __consultaConfirmedFieldKeys?: string[] }).__consultaConfirmedFieldKeys = (
+        event as CustomEvent<{ field_keys: string[] }>
+      ).detail.field_keys;
+    });
+  });
   await page.evaluate(async ({ componentUrl, label, evaluatedProjectId }) => {
     await import(componentUrl);
     const form = document.createElement("form");
@@ -99,7 +115,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
     field.setAttribute("project-id", evaluatedProjectId);
     field.setAttribute("endpoint", "/api/consulta-autofill");
     field.setAttribute("metrics-endpoint", "/api/consulta-autofill/metrics");
-    field.setAttribute("document-type", "cnh-e");
+    field.setAttribute("document-type", "auto");
     field.setAttribute("label", label);
     const input = document.createElement("input");
     input.id = "nome";
@@ -173,10 +189,12 @@ test("opens one direct card in a native field without an iframe or nested chrome
     await scanner.scanFile(new File(["synthetic"], "documento.png", { type: "image/png" }));
   });
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toBeVisible();
-  await expect(page.getByText("Autorização para Conduzir Ciclomotores (ACC)", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Data de nascimento")).toHaveValue("01/02/1990");
-  await expect(page.getByLabel("Número da CNH")).toHaveValue("12345678901");
-  await expect(page.getByLabel("Categoria")).toHaveValue("AB");
+  await expect(page.getByLabel("Data de emissão")).toHaveValue("01/01/2025");
+  await expect(page.getByText("Ver 9 campos adicionais", { exact: true })).toBeVisible();
+  await page.getByText("Ver 9 campos adicionais", { exact: true }).click();
+  await expect(page.getByLabel("Certidão")).toHaveValue("Registro sintético");
+  await expect(page.getByLabel("Órgão expedidor")).toHaveValue("Órgão sintético");
   await expect(page.getByAltText("Foto retornada pelo documento")).toBeVisible();
   await expect(page.getByRole("heading", { name: "QR Code encontrado" })).toHaveCount(0);
   expect(decodeBodies).toHaveLength(1);
@@ -212,9 +230,16 @@ test("opens one direct card in a native field without an iframe or nested chrome
     })).toEqual({ reviewColumns: 1, fieldColumns: 1 });
   }
 
-  await page.getByRole("button", { name: "Fechar", exact: true }).click();
+  await page.getByRole("button", { name: "Preencher formulário", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toHaveCount(0);
-  await expect.poll(() => metricBodies.map((body) => (body as { event?: string }).event).sort()).toEqual(["closed", "decoded", "opened", "qr_found"]);
+  const confirmedFieldKeys = await page.evaluate(() => (
+    window as Window & { __consultaConfirmedFieldKeys?: string[] }
+  ).__consultaConfirmedFieldKeys ?? []);
+  expect(confirmedFieldKeys).toHaveLength(15);
+  expect(confirmedFieldKeys).toEqual(expect.arrayContaining(["full_name", "certidao", "filiacao_1", "orgao_expedidor"]));
+  await expect.poll(() => metricBodies.map((body) => (body as { event?: string }).event).sort()).toEqual([
+    "closed", "confirmed", "decoded", "filled", "opened", "qr_found",
+  ]);
   const serializedMetrics = JSON.stringify(metricBodies);
   expect(serializedMetrics).not.toContain("full_name");
   expect(serializedMetrics).not.toContain("project_id");

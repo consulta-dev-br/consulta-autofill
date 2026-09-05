@@ -22,10 +22,12 @@
   border-radius: .85rem;
   background: #fff;
   box-shadow: 0 24px 48px rgb(16 24 40 / .28);
-  scrollbar-width: none;
+  scrollbar-color: #d0d5dd transparent;
+  scrollbar-width: thin;
 }
 
-.direct-scanner .card::-webkit-scrollbar { display: none; }
+.direct-scanner .card::-webkit-scrollbar { width: .45rem; }
+.direct-scanner .card::-webkit-scrollbar-thumb { border-radius: 999px; background: #d0d5dd; }
 .direct-scanner h1 { margin: 0; padding-right: 2rem; font-size: 1.15rem; letter-spacing: -.025em; }
 .direct-scanner p { margin: .4rem 0 0; color: #475467; font-size: .86rem; line-height: 1.45; }
 .direct-scanner .close {
@@ -123,6 +125,13 @@
 .direct-scanner .field-wide { grid-column: 1 / -1; }
 .direct-scanner .field label { color: #344054; font-size: .74rem; font-weight: 650; }
 .direct-scanner .field input { min-height: 2.45rem; padding: .5rem .6rem; border: 1px solid #d0d5dd; border-radius: .5rem; color: #101828; font: inherit; }
+.direct-scanner .review-details { grid-column: 1 / -1; min-width: 0; border: 1px solid #e4e7ec; border-radius: .65rem; background: #f9fafb; }
+.direct-scanner .review-details summary { display: flex; align-items: center; justify-content: space-between; min-height: 2.45rem; padding: .55rem .7rem; color: #344054; cursor: pointer; font-size: .78rem; font-weight: 700; list-style: none; }
+.direct-scanner .review-details summary::-webkit-details-marker { display: none; }
+.direct-scanner .review-details summary::after { color: #667085; content: "+"; font-size: 1.1rem; line-height: 1; }
+.direct-scanner .review-details[open] summary { border-bottom: 1px solid #e4e7ec; }
+.direct-scanner .review-details[open] summary::after { content: "−"; }
+.direct-scanner .review-fields-additional { padding: .7rem; }
 .direct-scanner .error { border-color: #fecdca; background: #fffbfa; }
 .direct-scanner .error h1 { color: #b42318; }
 .direct-scanner .hidden, .direct-scanner .status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }

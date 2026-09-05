@@ -32,6 +32,14 @@ type ReviewFieldPresentation = {
   wide?: boolean;
 };
 
+type OrderedReviewField = {
+  key: string;
+  value: string;
+  presentation: ReviewFieldPresentation;
+};
+
+const MAX_PRIMARY_REVIEW_FIELDS = 6;
+
 export type DirectScannerConfig = {
   projectId: string;
   sessionId: string;
@@ -104,8 +112,20 @@ const REVIEW_FIELD_PRESENTATION: Record<string, ReviewFieldPresentation> = {
   cpf: { label: "CPF", order: 20 },
   birth_date: { label: "Data de nascimento", order: 30 },
   data_nascimento: { label: "Data de nascimento", order: 30 },
+  datanascimento: { label: "Data de nascimento", order: 30 },
   nascimento: { label: "Data de nascimento", order: 30 },
   dt_nascimento: { label: "Data de nascimento", order: 30 },
+  document_number: { label: "Número do documento", order: 35 },
+  numero_documento: { label: "Número do documento", order: 35 },
+  numero_rg: { label: "Número do documento", order: 35 },
+  registro_geral: { label: "Número do documento", order: 35 },
+  rg: { label: "Número do documento", order: 35 },
+  issue_date: { label: "Data de emissão", order: 40 },
+  data_emissao: { label: "Data de emissão", order: 40 },
+  dataemissao: { label: "Data de emissão", order: 40 },
+  sexo: { label: "Sexo", order: 45 },
+  nacionalidade: { label: "Nacionalidade", order: 46 },
+  naturalidade: { label: "Naturalidade", order: 47 },
   mother_name: { label: "Nome da mãe", order: 40, wide: true },
   nome_mae: { label: "Nome da mãe", order: 40, wide: true },
   cnh_number: { label: "Número da CNH", order: 50 },
@@ -120,6 +140,13 @@ const REVIEW_FIELD_PRESENTATION: Record<string, ReviewFieldPresentation> = {
   validity_date: { label: "Validade", order: 80 },
   validade: { label: "Validade", order: 80 },
   data_validade: { label: "Validade", order: 80 },
+  certidao: { label: "Certidão", order: 81, wide: true },
+  filiacao_1: { label: "Filiação 1", order: 82, wide: true },
+  filiacao_2: { label: "Filiação 2", order: 83, wide: true },
+  nome_social: { label: "Nome social", order: 84, wide: true },
+  orgao_expedidor: { label: "Órgão expedidor", order: 85 },
+  local: { label: "Local de emissão", order: 86, wide: true },
+  hash: { label: "Hash do documento", order: 87, wide: true },
   license_plate: { label: "Placa", order: 110 },
   placa: { label: "Placa", order: 110 },
   renavam: { label: "RENAVAM", order: 120 },
@@ -150,6 +177,33 @@ function reviewFieldPresentation(key: string): ReviewFieldPresentation {
   return REVIEW_FIELD_PRESENTATION[key] || COMPACT_REVIEW_FIELD_PRESENTATION[compactReviewFieldKey(key)] || {
     label: key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
     order: Number.MAX_SAFE_INTEGER,
+  };
+}
+
+/**
+ * CNH-e and CRLV-e usually have a short result, while CIN and other official
+ * templates can contain many more editable values. Keep the identity-critical
+ * values in view and place the rest behind a native, clearly labelled
+ * disclosure. The extra inputs remain mounted, so confirmation never drops a
+ * field just because the compact review starts closed.
+ */
+function splitReviewFields(fields: OrderedReviewField[]): { primary: OrderedReviewField[]; additional: OrderedReviewField[] } {
+  if (fields.length <= MAX_PRIMARY_REVIEW_FIELDS) return { primary: fields, additional: [] };
+
+  const selected = new Set<string>();
+  for (const field of fields) {
+    if (field.presentation.order === Number.MAX_SAFE_INTEGER) continue;
+    selected.add(field.key);
+    if (selected.size === MAX_PRIMARY_REVIEW_FIELDS) break;
+  }
+  for (const field of fields) {
+    if (selected.size === MAX_PRIMARY_REVIEW_FIELDS) break;
+    selected.add(field.key);
+  }
+
+  return {
+    primary: fields.filter((field) => selected.has(field.key)),
+    additional: fields.filter((field) => !selected.has(field.key)),
   };
 }
 
@@ -582,7 +636,8 @@ export class DirectScanner {
     const orderedFields = Object.entries(this.result.fields)
       .map(([key, value]) => ({ key, value, presentation: reviewFieldPresentation(key) }))
       .sort((left, right) => left.presentation.order - right.presentation.order || left.presentation.label.localeCompare(right.presentation.label));
-    for (const { key, value, presentation } of orderedFields) {
+    const { primary, additional } = splitReviewFields(orderedFields);
+    const appendField = ({ key, value, presentation }: OrderedReviewField, target: HTMLElement) => {
       const field = document.createElement("div");
       field.className = "field";
       if (presentation.wide) field.classList.add("field-wide");
@@ -595,8 +650,20 @@ export class DirectScanner {
       input.value = value;
       input.autocomplete = "off";
       field.append(label, input);
-      fields.append(field);
+      target.append(field);
       inputs.set(key, input);
+    };
+    for (const field of primary) appendField(field, fields);
+    if (additional.length) {
+      const details = document.createElement("details");
+      details.className = "review-details";
+      const summary = document.createElement("summary");
+      summary.textContent = `Ver ${additional.length} ${additional.length === 1 ? "campo adicional" : "campos adicionais"}`;
+      const additionalFields = document.createElement("div");
+      additionalFields.className = "review-fields review-fields-additional";
+      for (const field of additional) appendField(field, additionalFields);
+      details.append(summary, additionalFields);
+      fields.append(details);
     }
     review.append(fields);
     card.append(review);
