@@ -98,6 +98,7 @@ function fieldLabel(key: string): string {
     mother_name: "Nome da mãe",
     cnh_number: "Número da CNH",
     category: "Categoria",
+    acc: "Autorização para Conduzir Ciclomotores (ACC)",
     validity_date: "Validade",
     license_plate: "Placa",
     renavam: "RENAVAM",

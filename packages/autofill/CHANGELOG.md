@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.9
+
+### Patch Changes
+
+- Label the official CNH `acc` field as Autorização para Conduzir Ciclomotores (ACC) in the review screen.
+
 ## 0.1.8
 
 ### Patch Changes
