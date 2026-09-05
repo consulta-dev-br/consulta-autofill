@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.12
+
+### Patch Changes
+
+- Add CIN and decoder-recognized official documents to the Autofill v1 contract, scanner validation, and secure backend examples.
+
 ## 0.1.11
 
 ### Patch Changes

@@ -2,7 +2,7 @@
 
 **Preencha cadastros com documentos oficiais em segundos.**
 
-Consulta Autofill é o componente público do ecossistema `consulta.dev.br`. Ele oferece uma experiência de câmera, arquivo, PDF, revisão e preenchimento de formulários para documentos com QR Code, sem expor a chave da API do parceiro no navegador.
+Consulta Autofill é o componente público do ecossistema `consulta.dev.br`. Ele oferece uma experiência de câmera, arquivo, PDF, revisão e preenchimento de formulários para CNH-e, CRLV-e, CIN e outros documentos oficiais compatíveis com QR Code, sem expor a chave da API do parceiro no navegador.
 
 > Este repositório não contém o decodificador VIO, documentos, payloads reais, chaves ou dados pessoais. A infraestrutura privada de decodificação continua no serviço Consulta.
 

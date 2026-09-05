@@ -78,10 +78,10 @@ function error(code: string, message: string, status = 400) {
   );
 }
 
-function validSessionBody(value: unknown): value is { protocol_version: 1; document_type: "auto" | "cnh-e" | "crlv-e" } {
+function validSessionBody(value: unknown): value is { protocol_version: 1; document_type: "auto" | "cnh-e" | "crlv-e" | "cin" | "other" } {
   if (!value || typeof value !== "object") return false;
   const body = value as Record<string, unknown>;
-  return body.protocol_version === 1 && (body.document_type === "auto" || body.document_type === "cnh-e" || body.document_type === "crlv-e") && Object.keys(body).length === 2;
+  return body.protocol_version === 1 && ["auto", "cnh-e", "crlv-e", "cin", "other"].includes(String(body.document_type)) && Object.keys(body).length === 2;
 }
 
 function validDecodeBody(value: unknown): value is { protocol_version: 1; session_token: string; payload_base64: string; include_photo: boolean } {

@@ -1,8 +1,13 @@
 /** Version shared by the Web Component, scanner runtime and partner endpoint. */
 export const AUTOFILL_PROTOCOL_VERSION = 1 as const;
 
-export const AUTOFILL_DOCUMENT_TYPES = ["auto", "cnh-e", "crlv-e"] as const;
-export const AUTOFILL_DECODED_DOCUMENT_TYPES = ["cnh-e", "crlv-e"] as const;
+/**
+ * `other` is a server-classified, decoder-recognized official document whose
+ * template is not one of the explicit Autofill mappings below. It never means
+ * arbitrary QR content from the browser.
+ */
+export const AUTOFILL_DOCUMENT_TYPES = ["auto", "cnh-e", "crlv-e", "cin", "other"] as const;
+export const AUTOFILL_DECODED_DOCUMENT_TYPES = ["cnh-e", "crlv-e", "cin", "other"] as const;
 export const AUTOFILL_BRANDING_MODES = ["consulta", "partner"] as const;
 /** Maximum number of editable values a decoded document may expose in v1. */
 export const AUTOFILL_MAX_DECODED_FIELDS = 64;
@@ -40,6 +45,14 @@ export type AutofillDecodedDocumentType = (typeof AUTOFILL_DECODED_DOCUMENT_TYPE
 export type AutofillBrandingMode = (typeof AUTOFILL_BRANDING_MODES)[number];
 export type AutofillMetricEvent = (typeof AUTOFILL_METRIC_EVENTS)[number];
 export type AutofillEmbedMetricEvent = (typeof AUTOFILL_EMBED_METRIC_EVENTS)[number];
+
+export function isAutofillDocumentType(value: unknown): value is AutofillDocumentType {
+  return typeof value === "string" && (AUTOFILL_DOCUMENT_TYPES as readonly string[]).includes(value);
+}
+
+export function isAutofillDecodedDocumentType(value: unknown): value is AutofillDecodedDocumentType {
+  return typeof value === "string" && (AUTOFILL_DECODED_DOCUMENT_TYPES as readonly string[]).includes(value);
+}
 
 export const AUTOFILL_ERROR_CODES = [
   "INVALID_REQUEST",
@@ -217,7 +230,7 @@ export function isAutofillDecodeData(value: unknown): value is AutofillDecodeDat
   const document = value.document;
   if (!hasExactKeys(document, ["type", "label"])) return false;
   if (
-    (document.type !== "cnh-e" && document.type !== "crlv-e")
+    !isAutofillDecodedDocumentType(document.type)
     || typeof document.label !== "string"
     || document.label.length < 1
     || document.label.length > 120

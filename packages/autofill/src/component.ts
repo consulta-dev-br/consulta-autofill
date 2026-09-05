@@ -1,7 +1,9 @@
 import {
+  AUTOFILL_DOCUMENT_TYPES,
   AUTOFILL_EMBED_METRIC_EVENTS,
   AUTOFILL_PROTOCOL_VERSION,
   isAutofillDecodeData,
+  isAutofillDecodedDocumentType,
 } from "./protocol.js";
 import type {
   AutofillDecodeData,
@@ -15,7 +17,7 @@ import type {
 } from "./protocol.js";
 
 const ELEMENT_NAME = "consulta-autofill";
-const DOCUMENT_TYPES = new Set<AutofillDocumentType>(["auto", "cnh-e", "crlv-e"]);
+const DOCUMENT_TYPES = new Set<AutofillDocumentType>(AUTOFILL_DOCUMENT_TYPES);
 const EMBED_METRIC_EVENTS = new Set<AutofillEmbedMetricEvent>(AUTOFILL_EMBED_METRIC_EVENTS);
 // Keeps the package importable from SSR/build tooling. Instances are only
 // constructed by the browser's Custom Elements registry.
@@ -117,7 +119,7 @@ function isDecodeResponse(value: unknown): value is AutofillDecodeResponse {
 function isDecodedDocument(value: unknown): value is AutofillDecodedDocument {
   return (
     isRecord(value)
-    && (value.type === "cnh-e" || value.type === "crlv-e")
+    && isAutofillDecodedDocumentType(value.type)
     && typeof value.label === "string"
     && value.label.length > 0
   );
@@ -202,7 +204,7 @@ function bootstrapConfig(value: unknown, session: AutofillSession): DirectScanne
   ) {
     return null;
   }
-  const validTypes = data.allowed_document_types.every((type) => type === "cnh-e" || type === "crlv-e");
+  const validTypes = data.allowed_document_types.every(isAutofillDecodedDocumentType);
   if (!validTypes || !data.allowed_document_types.length || Date.parse(data.expires_at) <= Date.now()) return null;
   return {
     projectId: session.project_id,
@@ -612,7 +614,9 @@ export class ConsultaAutofillElement extends HTMLElementBase {
 
   private documentType(): AutofillDocumentType {
     const value = this.getAttribute("document-type") || "auto";
-    if (!DOCUMENT_TYPES.has(value as AutofillDocumentType)) throw new Error("document-type precisa ser auto, cnh-e ou crlv-e.");
+    if (!DOCUMENT_TYPES.has(value as AutofillDocumentType)) {
+      throw new Error(`document-type precisa ser um de: ${AUTOFILL_DOCUMENT_TYPES.join(", ")}.`);
+    }
     return value as AutofillDocumentType;
   }
 

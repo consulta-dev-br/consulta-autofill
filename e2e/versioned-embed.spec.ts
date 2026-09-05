@@ -28,7 +28,7 @@ test("loads the production embed and Worker below an immutable version path", as
           project_id: projectId,
           session_id: sessionId,
           expires_at: new Date(Date.now() + 60_000).toISOString(),
-          allowed_document_types: ["cnh-e"],
+          allowed_document_types: ["cnh-e", "cin", "other"],
           photo_enabled: false,
           presentation: { layout: "compact" },
         },

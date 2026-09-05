@@ -21,7 +21,7 @@ function loadConfig(environment = process.env) {
 
 const sessionSchema = z.object({
   protocol_version: z.literal(1),
-  document_type: z.enum(["auto", "cnh-e", "crlv-e"]),
+  document_type: z.enum(["auto", "cnh-e", "crlv-e", "cin", "other"]),
 }).strict();
 const decodeSchema = z.object({
   protocol_version: z.literal(1),

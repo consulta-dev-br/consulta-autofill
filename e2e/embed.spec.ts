@@ -17,7 +17,7 @@ test("accepts only the origin-bound session handshake and presents private captu
           project_id: projectId,
           session_id: sessionId,
           expires_at: new Date(Date.now() + 60_000).toISOString(),
-          allowed_document_types: ["cnh-e", "crlv-e"],
+          allowed_document_types: ["cnh-e", "crlv-e", "cin", "other"],
           photo_enabled: true,
           branding: {
             mode: "consulta",
