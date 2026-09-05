@@ -23,7 +23,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
           bootstrap_url: `${origin}/api/v1/autofill/embed/bootstrap`,
           direct_scanner_url: `${origin}/src/direct-entry.ts`,
           allowed_document_types: ["cnh-e"],
-          photo_enabled: false,
+          photo_enabled: true,
         },
       }),
     });
@@ -40,7 +40,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
           session_id: sessionId,
           expires_at: new Date(Date.now() + 60_000).toISOString(),
           allowed_document_types: ["cnh-e"],
-          photo_enabled: false,
+          photo_enabled: true,
           branding: {
             mode: "consulta",
             name: "Consulta Autofill",
@@ -71,7 +71,10 @@ test("opens one direct card in a native field without an iframe or nested chrome
         data: {
           document: { type: "cnh-e", label: "CNH-e" },
           fields: { full_name: "Pessoa Sintética", acc: "Não se aplica" },
-          photo: null,
+          photo: {
+            mime_type: "image/png",
+            base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLq0QAAAABJRU5ErkJggg==",
+          },
         },
       }),
     });
@@ -164,9 +167,40 @@ test("opens one direct card in a native field without an iframe or nested chrome
   });
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toBeVisible();
   await expect(page.getByText("Autorização para Conduzir Ciclomotores (ACC)", { exact: true })).toBeVisible();
+  await expect(page.getByAltText("Foto retornada pelo documento")).toBeVisible();
   await expect(page.getByRole("heading", { name: "QR Code encontrado" })).toHaveCount(0);
   expect(decodeBodies).toHaveLength(1);
-  expect(decodeBodies[0]).toMatchObject({ include_photo: false });
+  expect(decodeBodies[0]).toMatchObject({ include_photo: true });
+
+  const desktopLayout = await page.evaluate(() => {
+    const field = document.querySelector<HTMLElement>("consulta-autofill-field");
+    const autofill = field?.shadowRoot?.querySelector<HTMLElement>("consulta-autofill");
+    const dialog = autofill?.shadowRoot?.querySelector<HTMLElement>(".dialog");
+    const review = dialog?.querySelector<HTMLElement>(".review-content");
+    const fields = dialog?.querySelector<HTMLElement>(".review-fields");
+    return {
+      hasPhoto: review?.classList.contains("has-photo"),
+      reviewColumns: getComputedStyle(review ?? document.body).gridTemplateColumns.split(" ").filter(Boolean).length,
+      fieldColumns: getComputedStyle(fields ?? document.body).gridTemplateColumns.split(" ").filter(Boolean).length,
+    };
+  });
+  const initialColumns = testInfo.project.name.startsWith("mobile-") ? 1 : 2;
+  expect(desktopLayout).toEqual({ hasPhoto: true, reviewColumns: initialColumns, fieldColumns: initialColumns });
+
+  if (!testInfo.project.name.startsWith("mobile-")) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(async () => page.evaluate(() => {
+      const field = document.querySelector<HTMLElement>("consulta-autofill-field");
+      const autofill = field?.shadowRoot?.querySelector<HTMLElement>("consulta-autofill");
+      const dialog = autofill?.shadowRoot?.querySelector<HTMLElement>(".dialog");
+      const review = dialog?.querySelector<HTMLElement>(".review-content");
+      const fields = dialog?.querySelector<HTMLElement>(".review-fields");
+      return {
+        reviewColumns: getComputedStyle(review ?? document.body).gridTemplateColumns.split(" ").filter(Boolean).length,
+        fieldColumns: getComputedStyle(fields ?? document.body).gridTemplateColumns.split(" ").filter(Boolean).length,
+      };
+    })).toEqual({ reviewColumns: 1, fieldColumns: 1 });
+  }
 
   await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toHaveCount(0);

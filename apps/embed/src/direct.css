@@ -6,6 +6,8 @@
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
+.direct-scanner.review-mode { width: min(100%, 46rem); }
+
 .direct-scanner *, .direct-scanner *::before, .direct-scanner *::after { box-sizing: border-box; }
 .direct-scanner button, .direct-scanner input { font: inherit; }
 .direct-scanner button:focus-visible, .direct-scanner input:focus-visible { outline: 3px solid #84adff; outline-offset: 2px; }
@@ -111,10 +113,16 @@
 .direct-scanner .check { display: flex; gap: .6rem; align-items: flex-start; margin-top: .8rem; padding: .7rem; border: 1px solid #d0d5dd; border-radius: .65rem; color: #344054; font-size: .8rem; line-height: 1.4; }
 .direct-scanner .check input { width: 1rem; height: 1rem; margin: .1rem 0 0; accent-color: var(--consulta-brand-accent); }
 .direct-scanner .badge { display: inline-flex; margin-top: .65rem; padding: .3rem .48rem; border-radius: 999px; color: var(--consulta-brand-accent); background: #eff8ff; font-size: .72rem; font-weight: 700; }
-.direct-scanner .field { display: grid; gap: .3rem; margin-top: .7rem; }
+.direct-scanner .review-content { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: .85rem; }
+.direct-scanner .review-content.has-photo { grid-template-columns: 8.2rem minmax(0, 1fr); align-items: start; }
+.direct-scanner .identity { display: grid; gap: .5rem; align-content: start; padding: .55rem; border: 1px solid #e4e7ec; border-radius: .7rem; background: #f9fafb; }
+.direct-scanner .photo { display: block; width: 100%; aspect-ratio: 3 / 4; border: 1px solid #d0d5dd; border-radius: .45rem; object-fit: cover; background: #f2f4f7; }
+.direct-scanner .photo-caption { margin: 0; color: #667085; font-size: .68rem; font-weight: 650; line-height: 1.25; text-align: center; }
+.direct-scanner .review-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem .8rem; min-width: 0; }
+.direct-scanner .field { display: grid; min-width: 0; gap: .3rem; }
+.direct-scanner .field-wide { grid-column: 1 / -1; }
 .direct-scanner .field label { color: #344054; font-size: .74rem; font-weight: 650; }
 .direct-scanner .field input { min-height: 2.45rem; padding: .5rem .6rem; border: 1px solid #d0d5dd; border-radius: .5rem; color: #101828; font: inherit; }
-.direct-scanner .photo { display: block; width: 5.8rem; height: 7.1rem; margin: .8rem auto 0; border: 1px solid #d0d5dd; border-radius: .55rem; object-fit: cover; background: #f2f4f7; }
 .direct-scanner .error { border-color: #fecdca; background: #fffbfa; }
 .direct-scanner .error h1 { color: #b42318; }
 .direct-scanner .hidden, .direct-scanner .status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
@@ -125,6 +133,16 @@
   .direct-scanner .option-compact { grid-template-columns: 1fr; padding: .55rem .25rem; }
   .direct-scanner .icon { width: 2.15rem; height: 2.15rem; }
   .direct-scanner .arrow { display: none; }
+}
+
+@media (max-width: 42rem) {
+  .direct-scanner.review-mode { width: 100%; }
+  .direct-scanner .review-content.has-photo { grid-template-columns: 1fr; gap: .75rem; }
+  .direct-scanner .identity { grid-template-columns: 4.25rem minmax(0, 1fr); align-items: center; gap: .7rem; padding: .5rem; }
+  .direct-scanner .photo { width: 4.25rem; }
+  .direct-scanner .photo-caption { text-align: left; }
+  .direct-scanner .review-fields { grid-template-columns: 1fr; }
+  .direct-scanner .field-wide { grid-column: auto; }
 }
 
 @keyframes consulta-autofill-spin { to { transform: rotate(360deg); } }
