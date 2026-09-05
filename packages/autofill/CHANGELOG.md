@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.6
+
+### Patch Changes
+
+- Adiciona um único controle acessível para fechar o card direto do Autofill, sem restaurar cabeçalho ou iframe.
+
 ## 0.1.5
 
 ### Patch Changes

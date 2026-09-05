@@ -11,6 +11,7 @@
 .direct-scanner button:focus-visible, .direct-scanner input:focus-visible { outline: 3px solid #84adff; outline-offset: 2px; }
 
 .direct-scanner .card {
+  position: relative;
   min-width: 0;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
@@ -23,8 +24,26 @@
 }
 
 .direct-scanner .card::-webkit-scrollbar { display: none; }
-.direct-scanner h1 { margin: 0; font-size: 1.15rem; letter-spacing: -.025em; }
+.direct-scanner h1 { margin: 0; padding-right: 2rem; font-size: 1.15rem; letter-spacing: -.025em; }
 .direct-scanner p { margin: .4rem 0 0; color: #475467; font-size: .86rem; line-height: 1.45; }
+.direct-scanner .close {
+  position: absolute;
+  top: .55rem;
+  right: .55rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: .5rem;
+  color: #475467;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.direct-scanner .close:hover { color: #101828; background: #f2f4f7; }
 .direct-scanner .actions { display: grid; min-width: 0; gap: .55rem; margin-top: .9rem; }
 .direct-scanner .actions-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .direct-scanner .button {

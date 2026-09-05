@@ -139,7 +139,8 @@ export class DirectScanner {
   }
 
   focus(): void {
-    this.root.querySelector<HTMLButtonElement>("button")?.focus();
+    const preferred = this.root.querySelector<HTMLButtonElement>(".option, .button");
+    (preferred ?? this.root.querySelector<HTMLButtonElement>(".close"))?.focus();
   }
 
   dispose(): void {
@@ -596,7 +597,7 @@ export class DirectScanner {
     card.classList.add("error");
     const actions = document.createElement("div");
     actions.className = "actions";
-    actions.append(this.button("Tentar novamente", "primary", () => this.options()), this.button("Fechar", "secondary", () => this.cancel()));
+    actions.append(this.button("Tentar novamente", "primary", () => this.options()));
     card.append(actions);
     this.render(card, text);
   }
@@ -606,9 +607,16 @@ export class DirectScanner {
     card.className = "card";
     const heading = document.createElement("h1");
     heading.textContent = title;
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "close";
+    close.setAttribute("aria-label", "Fechar");
+    close.title = "Fechar";
+    close.textContent = "×";
+    close.addEventListener("click", () => this.cancel());
     const description = document.createElement("p");
     description.textContent = text;
-    card.append(heading, description);
+    card.append(heading, close, description);
     return card;
   }
 
