@@ -2,6 +2,7 @@ import {
   AUTOFILL_MAX_PHOTO_BYTES,
   AUTOFILL_PROTOCOL_VERSION,
   isAutofillDecodeData,
+  isAutofillDecodedDocumentType,
   isAutofillFrameMessage,
   type AutofillDecodedDocument,
   type AutofillEmbedMetricEvent,
@@ -177,7 +178,7 @@ function bootstrapConfig(value: unknown, query: EmbedQuery, sessionId: string): 
   ) {
     return null;
   }
-  const validTypes = data.allowed_document_types.every((type) => type === "cnh-e" || type === "crlv-e");
+  const validTypes = data.allowed_document_types.every(isAutofillDecodedDocumentType);
   if (!validTypes || !data.allowed_document_types.length || Date.parse(data.expires_at) <= Date.now()) return null;
   return {
     projectId: query.projectId,

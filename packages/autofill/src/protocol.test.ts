@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  AUTOFILL_DECODED_DOCUMENT_TYPES,
+  AUTOFILL_DOCUMENT_TYPES,
   AUTOFILL_MAX_DECODED_FIELDS,
   AUTOFILL_MAX_FIELD_VALUE_CHARS,
   isAutofillDecodeData,
@@ -14,6 +16,19 @@ const validResult = {
 describe("decoded Autofill result", () => {
   it("accepts the bounded v1 result contract", () => {
     expect(isAutofillDecodeData(validResult)).toBe(true);
+  });
+
+  it("accepts CIN and decoder-recognized official document categories", () => {
+    expect(AUTOFILL_DOCUMENT_TYPES).toEqual(["auto", "cnh-e", "crlv-e", "cin", "other"]);
+    expect(AUTOFILL_DECODED_DOCUMENT_TYPES).toEqual(["cnh-e", "crlv-e", "cin", "other"]);
+    expect(isAutofillDecodeData({
+      ...validResult,
+      document: { type: "cin", label: "Carteira de Identidade Nacional" },
+    })).toBe(true);
+    expect(isAutofillDecodeData({
+      ...validResult,
+      document: { type: "other", label: "Documento oficial compatível" },
+    })).toBe(true);
   });
 
   it("rejects fields outside the v1 bounds before they reach the scanner review", () => {

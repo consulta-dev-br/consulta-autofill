@@ -1,6 +1,6 @@
 # Integração do Consulta Autofill
 
-O Consulta Autofill preenche formulários a partir de CNH-e e CRLV-e sem colocar a API key no navegador. O componente abre um único card direto para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
+O Consulta Autofill preenche formulários a partir de CNH-e, CRLV-e, CIN e outros documentos oficiais compatíveis sem colocar a API key no navegador. O componente abre um único card direto para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
 
 > A beta [`v0.1.6`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.6) está disponível pelo CDN oficial e pela GitHub Release. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
 
@@ -112,6 +112,10 @@ O controle deve ser filho direto do componente. Ele continua sendo um `input`, `
 O `project-id` é público e serve para consistência visual/protocolo. A associação real entre API key e projeto é feita pelo seu servidor, com `CONSULTA_PROJECT_ID`; nunca confie no atributo enviado pelo navegador para escolher uma credencial, plano ou marca.
 
 Campos com `data-consulta-field` são preenchidos somente se estiverem vazios. A pessoa revisa os dados antes de confirmar e pode editar os valores no card.
+
+### Tipos de documento
+
+Use `document-type="auto"` quando o projeto estiver habilitado para mais de um tipo: ele aceita CNH-e, CRLV-e, CIN e a categoria `other` para os demais templates oficiais reconhecidos pelo motor da Consulta. Também é possível solicitar um fluxo específico com `cnh-e`, `crlv-e`, `cin` ou `other`. A autorização continua no projeto e no servidor; o atributo do navegador nunca amplia os documentos habilitados.
 
 ## 3. Eventos e frameworks controlados
 

@@ -22,7 +22,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
           embed_url: `${origin}/`,
           bootstrap_url: `${origin}/api/v1/autofill/embed/bootstrap`,
           direct_scanner_url: `${origin}/src/direct-entry.ts`,
-          allowed_document_types: ["cnh-e"],
+          allowed_document_types: ["cnh-e", "cin", "other"],
           photo_enabled: true,
         },
       }),
@@ -39,7 +39,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
           project_id: projectId,
           session_id: sessionId,
           expires_at: new Date(Date.now() + 60_000).toISOString(),
-          allowed_document_types: ["cnh-e"],
+          allowed_document_types: ["cnh-e", "cin", "other"],
           photo_enabled: true,
           branding: {
             mode: "consulta",

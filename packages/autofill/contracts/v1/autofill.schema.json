@@ -37,11 +37,11 @@
     },
     "documentType": {
       "type": "string",
-      "enum": ["auto", "cnh-e", "crlv-e"]
+      "enum": ["auto", "cnh-e", "crlv-e", "cin", "other"]
     },
     "decodedDocumentType": {
       "type": "string",
-      "enum": ["cnh-e", "crlv-e"]
+      "enum": ["cnh-e", "crlv-e", "cin", "other"]
     },
     "metricEvent": {
       "type": "string",

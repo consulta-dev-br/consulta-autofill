@@ -17,6 +17,8 @@ export {
   AUTOFILL_MAX_PHOTO_BYTES,
   AUTOFILL_PROTOCOL_VERSION,
   isAutofillDecodeData,
+  isAutofillDecodedDocumentType,
+  isAutofillDocumentType,
   isAutofillEmbedReadyMessage,
   isAutofillFrameMessage,
 } from "./protocol.js";

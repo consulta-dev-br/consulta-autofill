@@ -26,6 +26,7 @@ describe("Autofill v1 JSON Schema", () => {
     const validateResponse = validator("sessionSuccessResponse");
 
     expect(validateRequest({ protocol_version: 1, document_type: "auto" })).toBe(true);
+    expect(validateRequest({ protocol_version: 1, document_type: "cin" })).toBe(true);
     expect(
       validateResponse({
         success: true,
@@ -38,7 +39,7 @@ describe("Autofill v1 JSON Schema", () => {
           embed_url: "https://embed.consulta.dev.br/v1",
           bootstrap_url: "https://consulta.dev.br/api/v1/autofill/embed/bootstrap",
           direct_scanner_url: "https://cdn.consulta.dev.br/embed/v0.1.4/assets/consulta-direct-scanner.js",
-          allowed_document_types: ["cnh-e", "crlv-e"],
+          allowed_document_types: ["cnh-e", "crlv-e", "cin", "other"],
           photo_enabled: false,
         },
       }),
@@ -53,7 +54,7 @@ describe("Autofill v1 JSON Schema", () => {
         success: true,
         request_id: "req_12345678",
         data: {
-          document: { type: "cnh-e", label: "CNH-e" },
+          document: { type: "other", label: "Documento oficial compatível" },
           fields: { full_name: "Pessoa de Teste", cpf: "00000000000" },
           photo: null,
         },
@@ -98,7 +99,7 @@ describe("Autofill v1 JSON Schema", () => {
         project_id: "pub_12345678",
         session_id: "afs_12345678",
         expires_at: "2026-09-03T12:00:00.000Z",
-        allowed_document_types: ["cnh-e", "crlv-e"],
+        allowed_document_types: ["cnh-e", "crlv-e", "cin", "other"],
         photo_enabled: false,
         branding: {
           mode: "partner",
