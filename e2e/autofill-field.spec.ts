@@ -70,7 +70,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
         request_id: "req_decode_12345678",
         data: {
           document: { type: "cnh-e", label: "CNH-e" },
-          fields: { full_name: "Pessoa Sintética" },
+          fields: { full_name: "Pessoa Sintética", acc: "Não se aplica" },
           photo: null,
         },
       }),
@@ -163,6 +163,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
     await scanner.scanFile(new File(["synthetic"], "documento.png", { type: "image/png" }));
   });
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toBeVisible();
+  await expect(page.getByText("Autorização para Conduzir Ciclomotores (ACC)", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "QR Code encontrado" })).toHaveCount(0);
   expect(decodeBodies).toHaveLength(1);
   expect(decodeBodies[0]).toMatchObject({ include_photo: false });
