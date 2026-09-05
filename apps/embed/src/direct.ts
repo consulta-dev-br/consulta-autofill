@@ -198,7 +198,7 @@ export class DirectScanner {
     camera.append(video, guide);
     const actions = document.createElement("div");
     actions.className = "actions";
-    actions.append(this.button("Ler agora", "primary", () => void this.scanCamera(true)), this.button("Voltar", "secondary", () => this.options()));
+    actions.append(this.button("Voltar", "secondary", () => this.options()));
     card.append(camera, actions);
     this.render(card, "Solicitando acesso à câmera…");
     this.video = video;
@@ -247,11 +247,11 @@ export class DirectScanner {
     if (this.timer !== null) window.clearTimeout(this.timer);
     this.timer = window.setTimeout(() => {
       this.timer = null;
-      void this.scanCamera(false);
+      void this.scanCamera();
     }, delay);
   }
 
-  private async scanCamera(manual: boolean): Promise<void> {
+  private async scanCamera(): Promise<void> {
     if (!this.video || !this.looping || this.scanning) return;
     if (this.video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !this.video.videoWidth || !this.video.videoHeight) {
       return this.schedule(250);
@@ -265,9 +265,8 @@ export class DirectScanner {
         this.metric("qr_found");
         return this.requestDecode(false);
       }
-      if (manual) this.setStatus("Ainda não encontramos um QR Code. Aproxime o documento e tente novamente.");
     } catch {
-      if (manual) this.setStatus("Não foi possível ler este quadro. Tente melhorar a iluminação.");
+      // The scheduled loop keeps trying the next camera frame.
     } finally {
       this.scanning = false;
       if (this.looping && !this.payload) this.schedule(450);
