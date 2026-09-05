@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.8
+
+### Patch Changes
+
+- Remove the redundant manual camera-read action while the scanner continuously looks for a QR Code.
+
 ## 0.1.7
 
 ### Patch Changes

@@ -356,7 +356,7 @@ class EmbedController {
     const video = document.createElement("video"); video.autoplay = true; video.muted = true; video.playsInline = true;
     const guide = document.createElement("div"); guide.className = "guide"; guide.setAttribute("aria-hidden", "true"); camera.append(video, guide);
     const actions = document.createElement("div"); actions.className = "actions";
-    actions.append(this.button("Ler agora", "primary", () => void this.scanCamera(true)), this.button("Voltar", "secondary", () => this.options()));
+    actions.append(this.button("Voltar", "secondary", () => this.options()));
     card.append(camera, actions); this.panel.replaceChildren(card); this.video = video;
     this.setStatus("Solicitando acesso à câmera…");
     this.metric("camera_requested");
@@ -387,19 +387,18 @@ class EmbedController {
   private schedule(delay: number): void {
     if (!this.looping || this.disposed) return;
     if (this.timer !== null) window.clearTimeout(this.timer);
-    this.timer = window.setTimeout(() => { this.timer = null; void this.scanCamera(false); }, delay);
+    this.timer = window.setTimeout(() => { this.timer = null; void this.scanCamera(); }, delay);
   }
 
-  private async scanCamera(manual: boolean): Promise<void> {
+  private async scanCamera(): Promise<void> {
     if (!this.video || !this.looping || this.scanning) return;
     if (this.video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !this.video.videoWidth || !this.video.videoHeight) return this.schedule(250);
     this.scanning = true;
     try {
       const payload = await this.scanImage(this.videoImage());
       if (payload) { this.payload = payload; this.stopCamera(); this.metric("qr_found"); this.setStatus("QR Code encontrado."); return this.confirmPayload(); }
-      if (manual) this.setStatus("Ainda não encontramos um QR Code. Aproxime o documento e tente novamente.");
     } catch {
-      if (manual) this.setStatus("Não foi possível ler este quadro. Tente melhorar a iluminação.");
+      // The scheduled loop keeps trying the next camera frame.
     } finally {
       this.scanning = false;
       if (this.looping && !this.payload) this.schedule(450);
