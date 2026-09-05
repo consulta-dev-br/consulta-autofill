@@ -1,5 +1,11 @@
 # @consulta-dev/autofill
 
+## 0.1.11
+
+### Patch Changes
+
+- Normalize compact decoded field names in the direct scanner review so standard CNH-e fields remain clear and usable for partner forms.
+
 ## 0.1.10
 
 ### Patch Changes

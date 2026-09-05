@@ -138,8 +138,16 @@ const REVIEW_FIELD_PRESENTATION: Record<string, ReviewFieldPresentation> = {
   nome_proprietario: { label: "Proprietário", order: 160, wide: true },
 };
 
+function compactReviewFieldKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+const COMPACT_REVIEW_FIELD_PRESENTATION: Record<string, ReviewFieldPresentation> = Object.fromEntries(
+  Object.entries(REVIEW_FIELD_PRESENTATION).map(([key, presentation]) => [compactReviewFieldKey(key), presentation]),
+);
+
 function reviewFieldPresentation(key: string): ReviewFieldPresentation {
-  return REVIEW_FIELD_PRESENTATION[key] || {
+  return REVIEW_FIELD_PRESENTATION[key] || COMPACT_REVIEW_FIELD_PRESENTATION[compactReviewFieldKey(key)] || {
     label: key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
     order: Number.MAX_SAFE_INTEGER,
   };
