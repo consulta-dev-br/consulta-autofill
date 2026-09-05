@@ -11,12 +11,20 @@ export default defineConfig({
     // Development-only benchmark pages must never be emitted by the hosted
     // embed build. The QR benchmark starts its own ephemeral Vite server.
     rollupOptions: {
-      input: resolve(import.meta.dirname, "index.html"),
+      // The direct scanner is imported as an ES module by the public Web
+      // Component, so its named export must survive Rollup's entry analysis.
+      preserveEntrySignatures: "strict",
+      input: {
+        embed: resolve(import.meta.dirname, "index.html"),
+        "direct-scanner": resolve(import.meta.dirname, "src/direct-entry.ts"),
+      },
       output: {
         // The release shell references these two entry assets directly. Their
         // enclosing version directory is immutable, so stable names do not
         // weaken cache safety and avoid a second runtime manifest lookup.
-        entryFileNames: "assets/consulta-embed.js",
+        entryFileNames: (chunk) => chunk.name === "direct-scanner"
+          ? "assets/consulta-direct-scanner.js"
+          : "assets/consulta-embed.js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: (asset) => asset.name?.endsWith(".css")
           ? "assets/consulta-embed.css"

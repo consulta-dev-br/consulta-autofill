@@ -2,8 +2,6 @@ import {
   AUTOFILL_EMBED_METRIC_EVENTS,
   AUTOFILL_PROTOCOL_VERSION,
   isAutofillDecodeData,
-  isAutofillEmbedReadyMessage,
-  isAutofillFrameMessage,
 } from "./protocol.js";
 import type {
   AutofillDecodeData,
@@ -11,7 +9,6 @@ import type {
   AutofillDecodedDocument,
   AutofillDocumentType,
   AutofillEmbedMetricEvent,
-  AutofillFrameMessage,
   AutofillMetricEvent,
   AutofillSession,
   AutofillSessionResponse,
@@ -36,12 +33,12 @@ const styleText = `
   .trigger-icon:hover:not(:disabled) { background: rgb(21 94 239 / .12); }
   .trigger-icon svg { display: block; }
   .overlay { position: fixed; z-index: 2147483000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(16 24 40 / .58); }
-  .dialog { position: relative; display: grid; width: min(100%, 31rem); height: min(100%, 34rem); min-height: 0; overflow: hidden; border-radius: 1rem; background: white; box-shadow: 0 24px 48px rgb(16 24 40 / .28); }
-  .loading { display: grid; place-items: center; padding: 2rem; color: #475467; text-align: center; }
-  iframe { width: 100%; height: 100%; min-height: 0; border: 0; background: white; }
+  .dialog { position: relative; width: min(100%, 29rem); max-height: calc(100dvh - 2rem); outline: 0; }
+  .runtime { width: 100%; }
+  .loading { padding: 1rem; border: 1px solid #e4e7ec; border-radius: .85rem; color: #475467; background: #fff; box-shadow: 0 24px 48px rgb(16 24 40 / .28); text-align: center; }
   @media (max-width: 34rem) {
-    .overlay { align-items: end; padding: 0; }
-    .dialog { width: 100%; height: min(100%, 34rem); border-radius: 1rem 1rem 0 0; }
+    .overlay { align-items: end; padding: .75rem; }
+    .dialog { width: 100%; max-height: calc(100dvh - 1.5rem); }
   }
 `;
 
@@ -52,30 +49,44 @@ type FilledDetail = {
   document: AutofillDecodeData["document"];
 };
 
-function randomNonce(): string {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID().replaceAll("-", "");
-  if (!globalThis.crypto?.getRandomValues) {
-    throw new Error("O navegador não disponibiliza aleatoriedade criptográfica para abrir o Autofill.");
-  }
-  const bytes = new Uint8Array(24);
-  globalThis.crypto.getRandomValues(bytes);
-  return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
-}
+type DirectScannerConfig = {
+  projectId: string;
+  sessionId: string;
+  expiresAt: string;
+  photoEnabled: boolean;
+  branding: {
+    name: string;
+    accentColor: string;
+    showPoweredBy: boolean;
+  };
+  presentation: { layout: "compact" | "standard" };
+};
+
+type DirectScannerInstance = {
+  dispose(): void;
+  focus(): void;
+};
+
+type DirectScannerRuntime = {
+  mountDirectScanner(
+    root: HTMLElement,
+    config: DirectScannerConfig,
+    callbacks: {
+      decode(payloadBase64: string, includePhoto: boolean): Promise<AutofillDecodeData>;
+      confirm(fields: Record<string, string>, document: AutofillDecodedDocument): void;
+      cancel(): void;
+      metric(event: AutofillEmbedMetricEvent): void;
+      error(message: string): void;
+    },
+  ): DirectScannerInstance;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function isEmbedMetricMessage(
-  message: AutofillFrameMessage,
-): message is AutofillFrameMessage<{ event: AutofillEmbedMetricEvent }> & { payload: { event: AutofillEmbedMetricEvent } } {
-  const payload = message.payload;
-  return (
-    isRecord(payload) &&
-    Object.keys(payload).length === 1 &&
-    typeof payload.event === "string" &&
-    EMBED_METRIC_EVENTS.has(payload.event as AutofillEmbedMetricEvent)
-  );
+function isLocalDevelopmentHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
 }
 
 function isSessionResponse(value: unknown): value is AutofillSessionResponse {
@@ -84,15 +95,16 @@ function isSessionResponse(value: unknown): value is AutofillSessionResponse {
   if (!isRecord(value.data)) return false;
   const data = value.data;
   return (
-    typeof data.session_id === "string" &&
-    typeof data.session_token === "string" &&
-    typeof data.project_id === "string" &&
-    typeof data.expires_at === "string" &&
-    typeof data.embed_url === "string" &&
-    typeof data.bootstrap_url === "string" &&
-    Array.isArray(data.allowed_document_types) &&
-    typeof data.photo_enabled === "boolean" &&
-    typeof value.request_id === "string"
+    typeof data.session_id === "string"
+    && typeof data.session_token === "string"
+    && typeof data.project_id === "string"
+    && typeof data.expires_at === "string"
+    && typeof data.embed_url === "string"
+    && typeof data.bootstrap_url === "string"
+    && (data.direct_scanner_url === undefined || typeof data.direct_scanner_url === "string")
+    && Array.isArray(data.allowed_document_types)
+    && typeof data.photo_enabled === "boolean"
+    && typeof value.request_id === "string"
   );
 }
 
@@ -104,10 +116,10 @@ function isDecodeResponse(value: unknown): value is AutofillDecodeResponse {
 
 function isDecodedDocument(value: unknown): value is AutofillDecodedDocument {
   return (
-    isRecord(value) &&
-    (value.type === "cnh-e" || value.type === "crlv-e") &&
-    typeof value.label === "string" &&
-    value.label.length > 0
+    isRecord(value)
+    && (value.type === "cnh-e" || value.type === "crlv-e")
+    && typeof value.label === "string"
+    && value.label.length > 0
   );
 }
 
@@ -157,14 +169,75 @@ function cameraIcon(): SVGSVGElement {
   return icon;
 }
 
+function consultaBranding(): DirectScannerConfig["branding"] {
+  return { name: "Consulta Autofill", accentColor: "#155EEF", showPoweredBy: true };
+}
+
+function bootstrapBranding(value: unknown): DirectScannerConfig["branding"] {
+  if (!isRecord(value) || typeof value.name !== "string" || value.name.trim().length < 1 || value.name.trim().length > 60) {
+    return consultaBranding();
+  }
+  if (typeof value.accent_color !== "string" || !/^#[0-9A-F]{6}$/i.test(value.accent_color) || typeof value.show_powered_by !== "boolean") {
+    return consultaBranding();
+  }
+  const name = value.name.trim();
+  const accentColor = value.accent_color.toUpperCase();
+  if (value.mode === "partner" && value.show_powered_by === false) return { name, accentColor, showPoweredBy: false };
+  if (value.mode === "consulta" && value.show_powered_by === true && name === "Consulta Autofill" && accentColor === "#155EEF") {
+    return consultaBranding();
+  }
+  return consultaBranding();
+}
+
+function bootstrapConfig(value: unknown, session: AutofillSession): DirectScannerConfig | null {
+  if (!isRecord(value) || value.success !== true || !isRecord(value.data)) return null;
+  const data = value.data;
+  if (
+    data.protocol_version !== AUTOFILL_PROTOCOL_VERSION
+    || data.project_id !== session.project_id
+    || data.session_id !== session.session_id
+    || typeof data.expires_at !== "string"
+    || typeof data.photo_enabled !== "boolean"
+    || !Array.isArray(data.allowed_document_types)
+  ) {
+    return null;
+  }
+  const validTypes = data.allowed_document_types.every((type) => type === "cnh-e" || type === "crlv-e");
+  if (!validTypes || !data.allowed_document_types.length || Date.parse(data.expires_at) <= Date.now()) return null;
+  return {
+    projectId: session.project_id,
+    sessionId: session.session_id,
+    expiresAt: data.expires_at,
+    photoEnabled: data.photo_enabled,
+    branding: bootstrapBranding(data.branding),
+    presentation: isRecord(data.presentation) && data.presentation.layout === "standard" ? { layout: "standard" } : { layout: "compact" },
+  };
+}
+
+function trustedRemoteUrl(value: string, purpose: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${purpose} não possui uma URL válida.`);
+  }
+  const localHttp = url.protocol === "http:" && isLocalDevelopmentHost(url.hostname);
+  if (
+    (url.protocol !== "https:" && !localHttp)
+    || url.username
+    || url.password
+    || url.hash
+  ) {
+    throw new Error(`${purpose} precisa usar HTTPS.`);
+  }
+  return url;
+}
+
 export class ConsultaAutofillElement extends HTMLElementBase {
   private readonly shadow = this.attachShadow({ mode: "open" });
   private modal: HTMLElement | null = null;
-  private iframe: HTMLIFrameElement | null = null;
-  private messagePort: MessagePort | null = null;
+  private scanner: DirectScannerInstance | null = null;
   private session: AutofillSession | null = null;
-  private handshakeNonce: string | null = null;
-  private embedOrigin: string | null = null;
   private requestAbort: AbortController | null = null;
   private trigger: HTMLButtonElement | null = null;
   private previousFocus: HTMLElement | null = null;
@@ -173,7 +246,6 @@ export class ConsultaAutofillElement extends HTMLElementBase {
 
   connectedCallback(): void {
     this.render();
-    window.addEventListener("message", this.handleWindowMessage);
     window.addEventListener("keydown", this.handleKeydown);
     window.addEventListener("focusin", this.handleFocusIn, true);
     this.emit("consulta:ready", { protocol_version: AUTOFILL_PROTOCOL_VERSION });
@@ -183,28 +255,45 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     this.destroy();
   }
 
-  /** Opens the hosted, origin-validated Autofill dialog. */
+  /** Opens one direct, origin-bound Autofill dialog in the component Shadow DOM. */
   async open(): Promise<void> {
     if (this.modal || this.requestAbort) return;
-    this.requestAbort = new AbortController();
+    const abort = new AbortController();
+    this.requestAbort = abort;
     this.showLoading();
     this.setTriggerBusy(true);
 
     try {
-      const session = await this.createPartnerSession(this.requestAbort.signal);
+      const session = await this.createPartnerSession(abort.signal);
       this.session = session;
       this.reportedMetrics.clear();
       this.metricsOpened = false;
-      this.handshakeNonce = randomNonce();
-      this.openEmbed(session);
+      const runtimePromise = this.loadDirectRuntime(session);
+      const config = await this.bootstrapDirectSession(session, abort.signal);
+      const runtime = await runtimePromise;
+      const modal = this.currentModal();
+      if (!modal || abort.signal.aborted) return;
+      const root = modal.querySelector<HTMLElement>(".runtime");
+      if (!root) throw new Error("O diálogo Autofill não foi inicializado.");
+      root.replaceChildren();
+      this.scanner = runtime.mountDirectScanner(root, config, {
+        decode: (payloadBase64, includePhoto) => this.decodePayload(payloadBase64, includePhoto),
+        confirm: (fields, document) => this.confirmFields(fields, document),
+        cancel: () => this.close(),
+        metric: (event) => this.reportEmbedMetric(event),
+        error: (message) => this.emitError(message),
+      });
       this.metricsOpened = true;
       this.emit("consulta:opened", { project_id: session.project_id, session_id: session.session_id });
       this.reportMetric("opened");
+      this.scanner.focus();
     } catch (error) {
-      this.close();
-      this.emitError(error instanceof Error ? error.message : "Não foi possível abrir o Consulta Autofill.");
+      if ((error as { name?: string }).name !== "AbortError") {
+        this.close();
+        this.emitError(error instanceof Error ? error.message : "Não foi possível abrir o Consulta Autofill.");
+      }
     } finally {
-      this.requestAbort = null;
+      if (this.requestAbort === abort) this.requestAbort = null;
       this.setTriggerBusy(false);
     }
   }
@@ -215,24 +304,19 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     this.metricsOpened = false;
     this.requestAbort?.abort();
     this.requestAbort = null;
-    this.messagePort?.close();
-    this.messagePort = null;
-    this.iframe?.remove();
-    this.iframe = null;
+    this.scanner?.dispose();
+    this.scanner = null;
     this.modal?.remove();
     this.modal = null;
     this.session = null;
-    this.handshakeNonce = null;
-    this.embedOrigin = null;
     this.setTriggerBusy(false);
     this.previousFocus?.focus?.();
     this.previousFocus = null;
   }
 
-  /** Removes listeners and iframe resources. The element itself remains in the DOM. */
+  /** Removes listeners and scanner resources. The element itself remains in the DOM. */
   destroy(): void {
     this.close();
-    window.removeEventListener("message", this.handleWindowMessage);
     window.removeEventListener("keydown", this.handleKeydown);
     window.removeEventListener("focusin", this.handleFocusIn, true);
   }
@@ -267,15 +351,13 @@ export class ConsultaAutofillElement extends HTMLElementBase {
 
   private showLoading(): void {
     const active = activeElementAcrossShadowRoots();
-    // WebKit can report <body> while dispatching a click from a nested shadow
-    // root. Returning to the trigger is preferable to leaving focus nowhere.
     this.previousFocus = active && active !== document.body ? active : this.trigger;
     const overlay = this.createDialog();
-    const content = document.createElement("div");
-    content.className = "loading";
-    content.textContent = "Preparando o scanner seguro…";
     const dialog = overlay.querySelector<HTMLElement>(".dialog");
-    dialog?.append(content);
+    const loading = document.createElement("section");
+    loading.className = "loading";
+    loading.textContent = "Preparando o scanner…";
+    dialog?.append(loading);
     dialog?.focus();
   }
 
@@ -292,10 +374,17 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     dialog.setAttribute("aria-modal", "true");
     dialog.setAttribute("aria-label", "Consulta Autofill");
     dialog.tabIndex = -1;
+    const runtime = document.createElement("div");
+    runtime.className = "runtime";
+    dialog.append(runtime);
     overlay.append(dialog);
     this.shadow.append(overlay);
     this.modal = overlay;
     return overlay;
+  }
+
+  private currentModal(): HTMLElement | null {
+    return this.modal;
   }
 
   private async createPartnerSession(signal: AbortSignal): Promise<AutofillSession> {
@@ -317,99 +406,37 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     return body.data;
   }
 
-  private openEmbed(session: AutofillSession): void {
-    if (!this.modal || !this.handshakeNonce) throw new Error("O diálogo Autofill não foi inicializado.");
-    const embedUrl = new URL(session.embed_url);
-    if (embedUrl.protocol !== "https:" && !this.isLocalDevelopmentHost(embedUrl.hostname)) {
-      throw new Error("O embed Autofill precisa ser servido por HTTPS.");
-    }
-    this.embedOrigin = embedUrl.origin;
-    embedUrl.searchParams.set("project_id", session.project_id);
-    embedUrl.searchParams.set("nonce", this.handshakeNonce);
-    embedUrl.searchParams.set("parent_origin", window.location.origin);
-
-    const frame = document.createElement("iframe");
-    frame.title = "Scanner Consulta Autofill";
-    frame.src = embedUrl.toString();
-    frame.allow = "camera";
-    frame.sandbox.add("allow-scripts", "allow-same-origin");
-    frame.referrerPolicy = "no-referrer";
-    frame.addEventListener("load", () => frame.focus(), { once: true });
-    const dialog = this.modal.querySelector(".dialog");
-    const loading = dialog?.querySelector(".loading");
-    loading?.remove();
-    dialog?.append(frame);
-    this.iframe = frame;
+  private async bootstrapDirectSession(session: AutofillSession, signal: AbortSignal): Promise<DirectScannerConfig> {
+    const url = trustedRemoteUrl(session.bootstrap_url, "O bootstrap do Autofill");
+    const response = await fetch(url, {
+      method: "POST",
+      mode: "cors",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_token: session.session_token, parent_origin: window.location.origin }),
+      signal,
+    });
+    const body: unknown = await response.json().catch(() => null);
+    const config = bootstrapConfig(body, session);
+    if (!response.ok || !config) throw new Error(responseMessage(body, "Não foi possível validar esta sessão Autofill."));
+    return config;
   }
 
-  private readonly handleWindowMessage = (event: MessageEvent<unknown>): void => {
-    if (!this.iframe || !this.session || !this.handshakeNonce || !this.embedOrigin || this.messagePort) return;
-    if (event.origin !== this.embedOrigin || event.source !== this.iframe.contentWindow) return;
-    if (!isAutofillEmbedReadyMessage(event.data)) return;
-    if (event.data.project_id !== this.session.project_id || event.data.nonce !== this.handshakeNonce) return;
-
-    const channel = new MessageChannel();
-    channel.port1.onmessage = this.handlePortMessage;
-    channel.port1.start();
-    this.messagePort = channel.port1;
-    const message: AutofillFrameMessage<{
-      session_token: string;
-      bootstrap_url: string;
-      parent_origin: string;
-    }> = {
-      protocol: "consulta-autofill",
-      version: AUTOFILL_PROTOCOL_VERSION,
-      type: "parent.session",
-      project_id: this.session.project_id,
-      session_id: this.session.session_id,
-      nonce: this.handshakeNonce,
-      payload: {
-        session_token: this.session.session_token,
-        bootstrap_url: this.session.bootstrap_url,
-        parent_origin: window.location.origin,
-      },
-    };
-    this.iframe.contentWindow?.postMessage(message, this.embedOrigin, [channel.port2]);
-  };
-
-  private readonly handlePortMessage = (event: MessageEvent<unknown>): void => {
-    try {
-      if (!this.session || !this.handshakeNonce || !this.messagePort || !isAutofillFrameMessage(event.data)) return;
-      const message = event.data;
-      if (
-        message.project_id !== this.session.project_id ||
-        message.session_id !== this.session.session_id ||
-        message.nonce !== this.handshakeNonce
-      ) {
-        return;
-      }
-
-      if (message.type === "embed.payload") {
-        void this.decodePayload(message);
-        return;
-      }
-      if (message.type === "embed.metric") {
-        if (isEmbedMetricMessage(message)) this.reportMetric(message.payload.event);
-        return;
-      }
-      if (message.type === "embed.confirm") {
-        this.confirmFields(message);
-        return;
-      }
-      if (message.type === "embed.cancel") this.close();
-    } catch (error) {
-      this.postError(error instanceof Error ? error.message : "Não foi possível processar a mensagem do Autofill.");
+  private async loadDirectRuntime(session: AutofillSession): Promise<DirectScannerRuntime> {
+    if (!session.direct_scanner_url) {
+      throw new Error("Esta API Autofill ainda não disponibiliza o scanner direto. Atualize a integração do servidor.");
     }
-  };
-
-  private async decodePayload(message: AutofillFrameMessage): Promise<void> {
-    if (!this.session || !this.messagePort) return;
-    const payload = message.payload;
-    if (!isRecord(payload) || typeof payload.payload_base64 !== "string" || typeof payload.include_photo !== "boolean") {
-      this.postError("O embed enviou um payload de leitura inválido.");
-      return;
+    const url = trustedRemoteUrl(session.direct_scanner_url, "O runtime direto do Autofill");
+    const loaded: unknown = await import(/* @vite-ignore */ url.toString());
+    if (!isRecord(loaded) || typeof loaded.mountDirectScanner !== "function") {
+      throw new Error("O runtime direto do Autofill não possui a interface esperada.");
     }
+    return loaded as DirectScannerRuntime;
+  }
 
+  private async decodePayload(payloadBase64: string, includePhoto: boolean): Promise<AutofillDecodeData> {
+    if (!this.session) throw new Error("A sessão Autofill foi encerrada.");
     this.requestAbort = new AbortController();
     try {
       const response = await fetch(this.partnerEndpoint("decode"), {
@@ -419,8 +446,8 @@ export class ConsultaAutofillElement extends HTMLElementBase {
         body: JSON.stringify({
           protocol_version: AUTOFILL_PROTOCOL_VERSION,
           session_token: this.session.session_token,
-          payload_base64: payload.payload_base64,
-          include_photo: payload.include_photo,
+          payload_base64: payloadBase64,
+          include_photo: includePhoto,
         }),
         signal: this.requestAbort.signal,
       });
@@ -433,32 +460,32 @@ export class ConsultaAutofillElement extends HTMLElementBase {
         field_keys: Object.keys(body.data.fields),
         request_id: body.request_id,
       });
-      this.post("parent.result", body.data);
-    } catch (error) {
-      if ((error as { name?: string }).name !== "AbortError") this.postError(error instanceof Error ? error.message : "Falha no decode.");
+      return body.data;
     } finally {
       this.requestAbort = null;
     }
   }
 
-  private confirmFields(message: AutofillFrameMessage): void {
-    if (!isRecord(message.payload) || !isRecord(message.payload.fields) || !this.session) {
-      this.postError("A confirmação de campos é inválida.");
+  private confirmFields(fields: Record<string, string>, document: AutofillDecodedDocument): void {
+    if (!this.session || !isDecodedDocument(document)) {
+      this.emitError("A confirmação de campos é inválida.");
       return;
     }
-    const fields: Record<string, string> = {};
-    for (const [key, value] of Object.entries(message.payload.fields)) {
-      if (typeof value === "string") fields[key] = value;
+    const safeFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (typeof value === "string") safeFields[key] = value;
     }
-    const result: AutofillDecodedDocument = isDecodedDocument(message.payload.document)
-      ? message.payload.document
-      : { type: "cnh-e", label: "Documento" };
-    const detail = this.fillFields(fields, result);
+    const detail = this.fillFields(safeFields, document);
     this.reportMetric("confirmed");
-    this.emit("consulta:confirmed", { document: result, field_keys: Object.keys(fields) });
+    this.emit("consulta:confirmed", { document, field_keys: Object.keys(safeFields) });
     this.reportMetric("filled");
     this.emit("consulta:filled", detail);
     this.close();
+  }
+
+  private reportEmbedMetric(event: AutofillEmbedMetricEvent): void {
+    if (!EMBED_METRIC_EVENTS.has(event)) return;
+    this.reportMetric(event);
   }
 
   private fillFields(fields: Record<string, string>, document: FilledDetail["document"]): FilledDetail {
@@ -513,25 +540,6 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     return null;
   }
 
-  private post(type: AutofillFrameMessage["type"], payload?: unknown): void {
-    if (!this.session || !this.handshakeNonce || !this.messagePort) return;
-    this.messagePort.postMessage({
-      protocol: "consulta-autofill",
-      version: AUTOFILL_PROTOCOL_VERSION,
-      type,
-      project_id: this.session.project_id,
-      session_id: this.session.session_id,
-      nonce: this.handshakeNonce,
-      payload,
-    } satisfies AutofillFrameMessage);
-  }
-
-  private postError(message: string): void {
-    this.reportMetric("error");
-    this.emitError(message);
-    this.post("parent.error", { message });
-  }
-
   private emit(name: string, detail: unknown): void {
     this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
   }
@@ -560,11 +568,11 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     try {
       const endpoint = new URL(value, window.location.href);
       if (
-        endpoint.origin !== window.location.origin ||
-        endpoint.username ||
-        endpoint.password ||
-        endpoint.search ||
-        endpoint.hash
+        endpoint.origin !== window.location.origin
+        || endpoint.username
+        || endpoint.password
+        || endpoint.search
+        || endpoint.hash
       ) {
         return null;
       }
@@ -608,10 +616,6 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     return value as AutofillDocumentType;
   }
 
-  private isLocalDevelopmentHost(hostname: string): boolean {
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
-  }
-
   private readonly handleKeydown = (event: KeyboardEvent): void => {
     if (event.key === "Escape" && this.modal) {
       event.preventDefault();
@@ -619,11 +623,11 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     }
   };
 
-  /** Keeps a modal dialog modal even when the trigger lives inside nested Shadow DOM. */
+  /** Keeps the direct dialog modal even when the trigger lives inside nested Shadow DOM. */
   private readonly handleFocusIn = (event: FocusEvent): void => {
     const modal = this.modal;
     if (!modal || event.composedPath().includes(modal)) return;
-    if (this.iframe) this.iframe.focus();
+    if (this.scanner) this.scanner.focus();
     else modal.querySelector<HTMLElement>(".dialog")?.focus();
   };
 }

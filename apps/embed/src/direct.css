@@ -1,0 +1,112 @@
+.direct-scanner {
+  --consulta-brand-accent: #155eef;
+  --consulta-brand-foreground: #fff;
+  width: min(100%, 29rem);
+  color: #101828;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.direct-scanner *, .direct-scanner *::before, .direct-scanner *::after { box-sizing: border-box; }
+.direct-scanner button, .direct-scanner input { font: inherit; }
+.direct-scanner button:focus-visible, .direct-scanner input:focus-visible { outline: 3px solid #84adff; outline-offset: 2px; }
+
+.direct-scanner .card {
+  min-width: 0;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid #e4e7ec;
+  border-radius: .85rem;
+  background: #fff;
+  box-shadow: 0 24px 48px rgb(16 24 40 / .28);
+  scrollbar-width: none;
+}
+
+.direct-scanner .card::-webkit-scrollbar { display: none; }
+.direct-scanner h1 { margin: 0; font-size: 1.15rem; letter-spacing: -.025em; }
+.direct-scanner p { margin: .4rem 0 0; color: #475467; font-size: .86rem; line-height: 1.45; }
+.direct-scanner .actions { display: grid; min-width: 0; gap: .55rem; margin-top: .9rem; }
+.direct-scanner .actions-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.direct-scanner .button {
+  min-height: 2.6rem;
+  padding: .6rem .8rem;
+  border: 1px solid transparent;
+  border-radius: .6rem;
+  cursor: pointer;
+  font-weight: 650;
+}
+.direct-scanner .primary { color: var(--consulta-brand-foreground); background: var(--consulta-brand-accent); }
+.direct-scanner .primary:hover { filter: brightness(.9); }
+.direct-scanner .secondary { color: #344054; border-color: #d0d5dd; background: #fff; }
+.direct-scanner .secondary:hover { background: #f9fafb; }
+
+.direct-scanner .option {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.3rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .7rem;
+  min-height: 4.25rem;
+  padding: .7rem;
+  border: 1px solid #d0d5dd;
+  border-radius: .7rem;
+  color: #101828;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+.direct-scanner .option:hover { border-color: #84adff; background: #f5f8ff; }
+.direct-scanner .icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: .65rem;
+  color: var(--consulta-brand-accent);
+  background: #eff8ff;
+  font-size: 1.05rem;
+}
+.direct-scanner .option strong, .direct-scanner .option span { display: block; min-width: 0; overflow-wrap: anywhere; }
+.direct-scanner .option .icon { display: grid; }
+.direct-scanner .option strong { font-size: .88rem; }
+.direct-scanner .option span span { margin-top: .1rem; color: #667085; font-size: .75rem; font-weight: 400; line-height: 1.35; }
+.direct-scanner .arrow { color: #98a2b3; font-size: 1.05rem; }
+.direct-scanner .option-compact {
+  grid-template-columns: 1fr;
+  place-items: center;
+  gap: .45rem;
+  min-height: 5.15rem;
+  padding: .65rem .35rem;
+  text-align: center;
+}
+.direct-scanner .option-compact .icon { width: 2.2rem; height: 2.2rem; }
+.direct-scanner .option-compact strong { font-size: .72rem; line-height: 1.15; }
+.direct-scanner .notice { margin-top: .8rem; padding: .65rem .7rem; border-radius: .6rem; color: #344054; background: #f9fafb; font-size: .73rem; line-height: 1.4; }
+.direct-scanner .powered, .direct-scanner .partner-brand { margin: .85rem 0 0; padding-top: .7rem; border-top: 1px solid #eaecf0; color: #667085; font-size: .66rem; font-weight: 650; text-align: center; }
+.direct-scanner .partner-brand { color: var(--consulta-brand-accent); }
+.direct-scanner .spinner { display: inline-block; width: .9rem; height: .9rem; margin-right: .45rem; border: 2px solid #d0d5dd; border-top-color: var(--consulta-brand-accent); border-radius: 50%; vertical-align: -.13rem; animation: consulta-autofill-spin .75s linear infinite; }
+.direct-scanner .camera { position: relative; overflow: hidden; margin-top: .8rem; border-radius: .75rem; background: #101828; aspect-ratio: 4 / 3; }
+.direct-scanner video { width: 100%; height: 100%; object-fit: cover; }
+.direct-scanner .guide { position: absolute; inset: 50% auto auto 50%; width: min(64vw, 14rem); aspect-ratio: 1; transform: translate(-50%, -50%); border: 2px solid rgb(255 255 255 / .9); border-radius: .85rem; box-shadow: 0 0 0 999px rgb(16 24 40 / .22); }
+.direct-scanner .guide::after { position: absolute; top: 50%; right: 10%; left: 10%; height: 2px; background: #84adff; box-shadow: 0 0 14px #84adff; animation: consulta-autofill-sweep 2s ease-in-out infinite; content: ""; }
+.direct-scanner .check { display: flex; gap: .6rem; align-items: flex-start; margin-top: .8rem; padding: .7rem; border: 1px solid #d0d5dd; border-radius: .65rem; color: #344054; font-size: .8rem; line-height: 1.4; }
+.direct-scanner .check input { width: 1rem; height: 1rem; margin: .1rem 0 0; accent-color: var(--consulta-brand-accent); }
+.direct-scanner .badge { display: inline-flex; margin-top: .65rem; padding: .3rem .48rem; border-radius: 999px; color: var(--consulta-brand-accent); background: #eff8ff; font-size: .72rem; font-weight: 700; }
+.direct-scanner .field { display: grid; gap: .3rem; margin-top: .7rem; }
+.direct-scanner .field label { color: #344054; font-size: .74rem; font-weight: 650; }
+.direct-scanner .field input { min-height: 2.45rem; padding: .5rem .6rem; border: 1px solid #d0d5dd; border-radius: .5rem; color: #101828; font: inherit; }
+.direct-scanner .photo { display: block; width: 5.8rem; height: 7.1rem; margin: .8rem auto 0; border: 1px solid #d0d5dd; border-radius: .55rem; object-fit: cover; background: #f2f4f7; }
+.direct-scanner .error { border-color: #fecdca; background: #fffbfa; }
+.direct-scanner .error h1 { color: #b42318; }
+.direct-scanner .hidden, .direct-scanner .status { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 22rem) {
+  .direct-scanner .card { padding: .8rem; }
+  .direct-scanner .option { grid-template-columns: 2.15rem minmax(0, 1fr); gap: .55rem; padding: .65rem; }
+  .direct-scanner .option-compact { grid-template-columns: 1fr; padding: .55rem .25rem; }
+  .direct-scanner .icon { width: 2.15rem; height: 2.15rem; }
+  .direct-scanner .arrow { display: none; }
+}
+
+@keyframes consulta-autofill-spin { to { transform: rotate(360deg); } }
+@keyframes consulta-autofill-sweep { 0%, 100% { transform: translateY(-3.5rem); opacity: .35; } 50% { transform: translateY(3.5rem); opacity: 1; } }

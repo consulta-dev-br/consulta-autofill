@@ -5,10 +5,11 @@ const embedDirectory = resolve(import.meta.dirname, "..");
 const distributionDirectory = resolve(embedDirectory, "dist");
 const indexPath = resolve(distributionDirectory, "index.html");
 const scriptPath = resolve(distributionDirectory, "assets", "consulta-embed.js");
+const directScriptPath = resolve(distributionDirectory, "assets", "consulta-direct-scanner.js");
 const stylesheetPath = resolve(distributionDirectory, "assets", "consulta-embed.css");
 const wasmPath = resolve(distributionDirectory, "zxing_reader.wasm");
 
-for (const path of [indexPath, scriptPath, stylesheetPath, wasmPath]) {
+for (const path of [indexPath, scriptPath, directScriptPath, stylesheetPath, wasmPath]) {
   if (!existsSync(path)) throw new Error(`Build versionado do embed não contém ${path}.`);
 }
 
@@ -29,10 +30,14 @@ if (!assetScripts.some((source) => source.includes("../zxing_reader.wasm")) || a
 if (assetScripts.some((source) => /new URL\(`?\/assets\//.test(source))) {
   throw new Error("O bundle do embed contém um Worker ou asset absoluto fora do path versionado.");
 }
+if (!readFileSync(directScriptPath, "utf8").includes("mountDirectScanner")) {
+  throw new Error("O build versionado não contém o runtime direto do scanner.");
+}
 
 console.log(JSON.stringify({
   success: true,
   entry: "assets/consulta-embed.js",
+  direct_scanner: "assets/consulta-direct-scanner.js",
   stylesheet: "assets/consulta-embed.css",
   wasm: "zxing_reader.wasm",
 }, null, 2));

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://consulta.dev.br/schemas/autofill/v1/autofill.schema.json",
   "title": "Consulta Autofill v1 contract",
-  "description": "Public partner and iframe contract. It contains no VIO decoder implementation or document data.",
+  "description": "Public partner and direct scanner contract. It contains no VIO decoder implementation or document data.",
   "$defs": {
     "protocolVersion": {
       "const": 1
@@ -168,6 +168,7 @@
         "expires_at": { "type": "string", "format": "date-time" },
         "embed_url": { "type": "string", "format": "uri", "pattern": "^https://" },
         "bootstrap_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "direct_scanner_url": { "type": "string", "format": "uri", "pattern": "^https://" },
         "allowed_document_types": {
           "type": "array",
           "minItems": 1,

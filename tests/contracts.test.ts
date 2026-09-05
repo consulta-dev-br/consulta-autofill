@@ -37,6 +37,7 @@ describe("Autofill v1 JSON Schema", () => {
           expires_at: "2026-09-03T12:00:00.000Z",
           embed_url: "https://embed.consulta.dev.br/v1",
           bootstrap_url: "https://consulta.dev.br/api/v1/autofill/embed/bootstrap",
+          direct_scanner_url: "https://cdn.consulta.dev.br/embed/v0.1.4/assets/consulta-direct-scanner.js",
           allowed_document_types: ["cnh-e", "crlv-e"],
           photo_enabled: false,
         },
@@ -87,7 +88,7 @@ describe("Autofill v1 JSON Schema", () => {
     })).toBe(false);
   });
 
-  it("keeps iframe branding server-owned and plan-safe", () => {
+  it("keeps scanner branding server-owned and plan-safe", () => {
     const validate = validator("embedBootstrapSuccessResponse");
     const response = {
       success: true,

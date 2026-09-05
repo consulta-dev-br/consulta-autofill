@@ -18,7 +18,7 @@ export interface QrEngine {
 
 export interface ZXingWasmQrEngineOptions {
   /**
-   * Version-pinned Reader WASM asset served by the hosted embed or a partner
+   * Version-pinned Reader WASM asset served by the direct scanner runtime or a partner
    * deployment. Keeping this explicit avoids an implicit third-party CDN
    * request at scan time.
    */

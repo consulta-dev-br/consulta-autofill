@@ -1,6 +1,9 @@
-# Deploy do shell `embed.consulta.dev.br`
+# Deploy do runtime direto e shell legado `embed.consulta.dev.br`
 
-O shell do iframe é uma aplicação separada do site principal. Não o publique
+O runtime direto `consulta-direct-scanner.js` é o caminho padrão: ele é
+importado pelo Web Component e montado no Shadow DOM do site parceiro, sem
+iframe. O shell abaixo continua disponível apenas para clientes anteriores.
+Não o publique
 atrás dos headers globais de `consulta.dev.br`: `X-Frame-Options: SAMEORIGIN` e
 `frame-ancestors 'none'` impedem a integração legítima em sites parceiros.
 
@@ -81,6 +84,7 @@ embed/v0.1.0/
 ├── index.html
 ├── zxing_reader.wasm
 └── assets/
+    ├── consulta-direct-scanner.js
     ├── consulta-embed.js
     ├── consulta-embed.css
     ├── qr-worker-<hash>.js
@@ -102,11 +106,12 @@ publicar, `pnpm embed:verify-versioned` confirma que `index.html`, o Worker e
 o WASM continuam resolvendo dentro do diretório versionado. O E2E também monta
 o build em `/embed/v0.0.0/` e exercita o Worker nos três navegadores.
 
-Como o documento do shell carrega módulos de outra origem, o CDN precisa
-responder os assets com `Access-Control-Allow-Origin: https://embed.consulta.dev.br`
-(sem cookies), além de `X-Content-Type-Options: nosniff`. Não use `*` como
-política de produção por conveniência; cada ambiente de embed deve estar
-explicitamente autorizado.
+Como o runtime direto é importado por origens de parceiros cadastrados e não
+usa cookies, o CDN precisa responder seus assets imutáveis com
+`Access-Control-Allow-Origin: *`, além de `X-Content-Type-Options: nosniff`.
+A autorização continua no bootstrap de curta duração, que só devolve a
+configuração ao `Origin` vinculado à sessão; CORS do arquivo público não é a
+fronteira de autorização.
 
 ## Checklist operacional
 
