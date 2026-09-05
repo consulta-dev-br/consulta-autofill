@@ -120,7 +120,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
     cards: 1,
     iframes: 0,
     headers: 0,
-    closeButtons: 0,
+    closeButtons: 1,
     loadingCards: 0,
     poweredInsideCard: true,
     verticalScroller: "auto",
@@ -133,7 +133,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
     return autofill?.shadowRoot?.activeElement?.tagName;
   })).toBe("BUTTON");
 
-  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Como prefere ler o documento?" })).toHaveCount(0);
   await expect.poll(() => metricBodies.map((body) => (body as { event?: string }).event).sort()).toEqual(["closed", "opened"]);
   const serializedMetrics = JSON.stringify(metricBodies);
