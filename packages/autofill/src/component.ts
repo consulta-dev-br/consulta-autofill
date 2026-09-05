@@ -353,12 +353,12 @@ export class ConsultaAutofillElement extends HTMLElementBase {
     const active = activeElementAcrossShadowRoots();
     this.previousFocus = active && active !== document.body ? active : this.trigger;
     const overlay = this.createDialog();
-    const dialog = overlay.querySelector<HTMLElement>(".dialog");
+    const runtime = overlay.querySelector<HTMLElement>(".runtime");
     const loading = document.createElement("section");
     loading.className = "loading";
     loading.textContent = "Preparando o scanner…";
-    dialog?.append(loading);
-    dialog?.focus();
+    runtime?.replaceChildren(loading);
+    overlay.querySelector<HTMLElement>(".dialog")?.focus();
   }
 
   private createDialog(): HTMLElement {

@@ -1,5 +1,13 @@
 # @consulta-dev/qr-engine
 
+## 0.1.5
+
+### Patch Changes
+
+- Keep the opening placeholder inside the scanner runtime container so it is
+  removed before the compact card is rendered. This prevents a second visual
+  surface from remaining below the direct scanner.
+
 ## 0.1.4
 
 ### Patch Changes

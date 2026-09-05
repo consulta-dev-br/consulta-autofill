@@ -111,6 +111,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
       iframes: dialog?.querySelectorAll("iframe").length,
       headers: dialog?.querySelectorAll("header").length,
       closeButtons: dialog?.querySelectorAll('button[aria-label^="Fechar"]').length,
+      loadingCards: dialog?.querySelectorAll(".loading").length,
       poweredInsideCard: Boolean(dialog?.querySelector(".card .powered")),
       verticalScroller: getComputedStyle(dialog?.querySelector<HTMLElement>(".card") ?? document.body).overflowY,
     };
@@ -120,6 +121,7 @@ test("opens one direct card in a native field without an iframe or nested chrome
     iframes: 0,
     headers: 0,
     closeButtons: 0,
+    loadingCards: 0,
     poweredInsideCard: true,
     verticalScroller: "auto",
   });
