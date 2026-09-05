@@ -70,7 +70,14 @@ test("opens one direct card in a native field without an iframe or nested chrome
         request_id: "req_decode_12345678",
         data: {
           document: { type: "cnh-e", label: "CNH-e" },
-          fields: { full_name: "Pessoa Sintética", acc: "Não se aplica" },
+          fields: {
+            full_name: "Pessoa Sintética",
+            cpf: "000.000.000-00",
+            datanascimento: "01/02/1990",
+            numeroregistro: "12345678901",
+            categoriahabilitacao: "AB",
+            acc: "Não se aplica",
+          },
           photo: {
             mime_type: "image/png",
             base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLq0QAAAABJRU5ErkJggg==",
@@ -167,6 +174,9 @@ test("opens one direct card in a native field without an iframe or nested chrome
   });
   await expect(page.getByRole("heading", { name: "Confira antes de preencher" })).toBeVisible();
   await expect(page.getByText("Autorização para Conduzir Ciclomotores (ACC)", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Data de nascimento")).toHaveValue("01/02/1990");
+  await expect(page.getByLabel("Número da CNH")).toHaveValue("12345678901");
+  await expect(page.getByLabel("Categoria")).toHaveValue("AB");
   await expect(page.getByAltText("Foto retornada pelo documento")).toBeVisible();
   await expect(page.getByRole("heading", { name: "QR Code encontrado" })).toHaveCount(0);
   expect(decodeBodies).toHaveLength(1);
