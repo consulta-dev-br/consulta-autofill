@@ -1,6 +1,6 @@
 # Integração do Consulta Autofill
 
-O Consulta Autofill preenche formulários a partir de CNH-e e CRLV-e sem colocar a API key no navegador. O componente abre um iframe oficial para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
+O Consulta Autofill preenche formulários a partir de CNH-e e CRLV-e sem colocar a API key no navegador. O componente abre um único card direto para câmera, imagem, PDF e revisão; o seu servidor cria a sessão e encaminha o QR para a API Consulta.
 
 > A beta [`v0.1.3`](https://github.com/consulta-dev-br/consulta-autofill/releases/tag/v0.1.3) está disponível pelo CDN oficial e pela GitHub Release. Os pacotes npm ainda aguardam Trusted Publishing; em produção, use a URL exata do CDN e o `integrity` do manifest, nunca uma URL de branch Git.
 
@@ -76,7 +76,7 @@ marca vem exclusivamente da configuração segura do projeto no servidor:
 - Free e Starter mostram `Consulta Autofill` e `Powered by consulta.dev.br`.
 - Pro e Enterprise podem definir nome e cor de destaque por projeto.
 
-O iframe recebe somente a configuração de exibição no bootstrap autenticado.
+O runtime direto recebe somente a configuração de exibição no bootstrap autenticado.
 Além da marca, o projeto pode escolher a apresentação compacta (grade de
 ícones e rótulos curtos) ou detalhada. Nem o componente, nem o endpoint do
 parceiro aceitam uma escolha de marca ou layout do browser. Isso mantém a
@@ -111,7 +111,7 @@ O controle deve ser filho direto do componente. Ele continua sendo um `input`, `
 
 O `project-id` é público e serve para consistência visual/protocolo. A associação real entre API key e projeto é feita pelo seu servidor, com `CONSULTA_PROJECT_ID`; nunca confie no atributo enviado pelo navegador para escolher uma credencial, plano ou marca.
 
-Campos com `data-consulta-field` são preenchidos somente se estiverem vazios. A pessoa revisa os dados antes de confirmar e pode editar os valores no iframe.
+Campos com `data-consulta-field` são preenchidos somente se estiverem vazios. A pessoa revisa os dados antes de confirmar e pode editar os valores no card.
 
 ## 3. Eventos e frameworks controlados
 
@@ -200,7 +200,7 @@ A foto é desligada por padrão no projeto e na interface. Mesmo para um projeto
 
 Toda resposta de sucesso do decode deve incluir `photo`: use `null` quando a
 foto não foi solicitada ou não foi autorizada. Quando houver foto, envie
-somente JPEG ou PNG em base64 conforme o schema v1; o iframe rejeita campos,
+somente JPEG ou PNG em base64 conforme o schema v1; o runtime rejeita campos,
 valores e imagens que ultrapassem os limites publicados.
 
 O funil de métricas é deliberadamente separado da sua analytics geral. Se
@@ -212,14 +212,19 @@ O Autofill não dispara o webhook `document.decoded`; se o parceiro precisar de 
 
 ## 6. Headers de produção
 
-Permita o iframe oficial e delegue câmera somente para ele. Ajuste os hosts de acordo com o ambiente contratado:
+O scanner roda no mesmo contexto do seu formulário, sem `iframe`. Permita o
+script e os Workers imutáveis do CDN, a chamada de bootstrap à Consulta e a
+câmera para a própria origem do seu site:
 
 ```http
-Content-Security-Policy: frame-src https://embed.consulta.dev.br; script-src 'self' https://cdn.consulta.dev.br
-Permissions-Policy: camera=(self "https://embed.consulta.dev.br")
+Content-Security-Policy: script-src 'self' https://cdn.consulta.dev.br; connect-src 'self' https://consulta.dev.br https://cdn.consulta.dev.br; worker-src 'self' https://cdn.consulta.dev.br; img-src 'self' blob: data:; media-src 'self' blob:
+Permissions-Policy: camera=(self)
 ```
 
-O componente já cria o iframe com `sandbox="allow-scripts allow-same-origin"` e `allow="camera"`. Não relaxe esse sandbox e não use `postMessage(..., "*")` em integrações customizadas.
+O componente não aceita uma URL de runtime, marca, cor ou layout como atributo
+do browser. O servidor Consulta devolve o runtime versionado e a configuração
+após conferir a origem vinculada à sessão. A partir da versão direta, não há
+`postMessage` nem permissões delegadas a uma moldura filha.
 
 ## 7. Erros e recuperação
 

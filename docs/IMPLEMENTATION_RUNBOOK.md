@@ -9,7 +9,7 @@ logs ou prompts.
 
 | Área | Onde continua |
 | --- | --- |
-| Web Component, iframe, QR local, contratos, exemplos e releases | Este repositório público |
+| Web Component, card direto, QR local, contratos, exemplos e releases | Este repositório público |
 | Decode VIO, API keys, contas, billing, banco, webhooks e projetos | Serviço privado Consulta |
 | Sessão do usuário, autorização e persistência do cadastro | Backend do parceiro |
 

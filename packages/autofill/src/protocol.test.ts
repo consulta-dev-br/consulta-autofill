@@ -16,7 +16,7 @@ describe("decoded Autofill result", () => {
     expect(isAutofillDecodeData(validResult)).toBe(true);
   });
 
-  it("rejects fields outside the v1 bounds before they reach the iframe", () => {
+  it("rejects fields outside the v1 bounds before they reach the scanner review", () => {
     const tooManyFields = Object.fromEntries(
       Array.from({ length: AUTOFILL_MAX_DECODED_FIELDS + 1 }, (_, index) => [`field_${index}`, "valor"]),
     );

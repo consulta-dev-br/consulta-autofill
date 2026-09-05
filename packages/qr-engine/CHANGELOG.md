@@ -1,5 +1,14 @@
 # @consulta-dev/qr-engine
 
+## 0.1.4
+
+### Patch Changes
+
+- Render the Autofill scanner directly inside the Web Component Shadow DOM. The
+  first screen is now one compact card with local camera, image, and PDF choices,
+  without an iframe or duplicated dialog chrome. The QR reader remains lazy and
+  begins loading while the browser asks for camera permission.
+
 ## 0.1.3
 
 ### Patch Changes

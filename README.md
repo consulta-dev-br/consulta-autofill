@@ -11,7 +11,7 @@ Consulta Autofill é o componente público do ecossistema `consulta.dev.br`. Ele
 ```text
 Formulário do parceiro
   → @consulta-dev/autofill
-  → iframe oficial da Consulta
+  → card direto no Shadow DOM
   → endpoint do parceiro
   → API privada da Consulta
   → revisão e preenchimento confirmado
@@ -24,7 +24,7 @@ permissão de câmera, QR, decode, confirmação e preenchimento) ao painel
 Consulta. Essa ponte também passa pelo seu backend e não inclui documento,
 campo, valor, imagem, QR, IP ou identidade do usuário final.
 
-Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br` no iframe. Pro e Enterprise podem configurar nome e cor por projeto; a apresentação compacta ou detalhada também é escolhida por projeto. Essas configurações são resolvidas pelo bootstrap autenticado, nunca por atributo ou payload vindo do browser.
+Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br` no card. Pro e Enterprise podem configurar nome e cor por projeto; a apresentação compacta ou detalhada também é escolhida por projeto. Essas configurações são resolvidas pelo bootstrap autenticado, nunca por atributo ou payload vindo do browser.
 
 ## Pacotes
 
@@ -32,7 +32,7 @@ Free e Starter mantêm a marca `Consulta Autofill` e `Powered by consulta.dev.br
 |---|---|---|
 | `@consulta-dev/autofill` | Web Component e contrato público | Beta `v0.1.3` publicada |
 | `@consulta-dev/qr-engine` | Interface de leitura de QR no navegador | Beta `v0.1.3` publicada |
-| `apps/embed` | Aplicação hospedada no iframe | Beta `v0.1.3` publicada |
+| `apps/embed` | Runtime direto do scanner e shell legado de compatibilidade | Beta `v0.1.3` publicada |
 
 ## Desenvolvimento
 
@@ -58,7 +58,7 @@ pnpm test:e2e
 
 - A API key nunca pertence ao cliente web.
 - Um projeto só pode ser usado nas origens HTTPS exatas autorizadas.
-- A comunicação iframe/página valida origem, janela, versão e nonce.
+- O bootstrap valida a origem exata vinculada à sessão antes de liberar a configuração do scanner.
 - Nenhum payload, imagem, foto ou campo decodificado deve ser enviado para analytics ou logs públicos.
 - O componente não substitui campos existentes sem confirmação explícita.
 
@@ -66,7 +66,7 @@ Leia [a arquitetura](docs/ARCHITECTURE.md) e a [política de segurança](SECURIT
 
 O guia com o componente, a ponte same-origin, CSP/Permissions Policy e exemplos de servidor está em [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
-Para a integração HTML mais curta, use `<consulta-autofill-field>`: ele posiciona o botão de câmera acessível dentro de um `input` nativo e abre o fluxo hospedado após o toque.
+Para a integração HTML mais curta, use `<consulta-autofill-field>`: ele posiciona o botão de câmera acessível dentro de um `input` nativo e abre um único card direto após o toque.
 
 Os exemplos de ponte segura para Next.js, Express, Laravel, FastAPI, Go, Spring Boot e ASP.NET Core ficam em [examples/backend](examples/backend).
 

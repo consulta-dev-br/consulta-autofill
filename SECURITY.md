@@ -16,6 +16,6 @@ Confirmaremos o recebimento e coordenaremos a divulgação após uma correção 
 
 ## Escopo
 
-São especialmente relevantes: validação de origem, comunicação `postMessage`, exposição de API keys, bypass de sessão, XSS, acesso indevido à câmera, vazamento de dados pessoais e cadeia de publicação.
+São especialmente relevantes: validação de origem e bootstrap, exposição de API keys, bypass de sessão, XSS, acesso indevido à câmera, vazamento de dados pessoais e cadeia de publicação. O `postMessage` do shell legado também permanece no escopo enquanto houver clientes nessa versão.
 
 O repositório público não recebe documentos reais. Remova imediatamente qualquer dado pessoal ou segredo enviado por engano e avise os mantenedores.

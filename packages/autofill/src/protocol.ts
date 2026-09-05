@@ -1,4 +1,4 @@
-/** Version shared by the Web Component, hosted embed and partner endpoint. */
+/** Version shared by the Web Component, scanner runtime and partner endpoint. */
 export const AUTOFILL_PROTOCOL_VERSION = 1 as const;
 
 export const AUTOFILL_DOCUMENT_TYPES = ["auto", "cnh-e", "crlv-e"] as const;
@@ -8,7 +8,7 @@ export const AUTOFILL_BRANDING_MODES = ["consulta", "partner"] as const;
 export const AUTOFILL_MAX_DECODED_FIELDS = 64;
 /** Maximum UTF-16 code units per decoded field value in v1. */
 export const AUTOFILL_MAX_FIELD_VALUE_CHARS = 4_096;
-/** The optional review photo is bounded before it is decoded in the iframe. */
+/** The optional review photo is bounded before it is decoded in the scanner UI. */
 export const AUTOFILL_MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export const AUTOFILL_MAX_PHOTO_BASE64_CHARS = 4 * Math.ceil(AUTOFILL_MAX_PHOTO_BYTES / 3);
 /**
@@ -27,7 +27,7 @@ export const AUTOFILL_METRIC_EVENTS = [
   "closed",
   "error",
 ] as const;
-/** Events that can only originate in the hosted iframe over its validated MessagePort. */
+/** Fixed scanner lifecycle events forwarded through the partner metrics bridge. */
 export const AUTOFILL_EMBED_METRIC_EVENTS = [
   "camera_requested",
   "camera_granted",
@@ -92,8 +92,10 @@ export interface AutofillSession {
   project_id: string;
   expires_at: string;
   embed_url: string;
-  /** Consulta endpoint that only the hosted iframe may call for bootstrap. */
+  /** Consulta endpoint used by the scanner runtime to fetch server-owned UI configuration. */
   bootstrap_url: string;
+  /** Immutable ES module that mounts the scanner directly in the component Shadow DOM. */
+  direct_scanner_url?: string;
   allowed_document_types: AutofillDecodedDocumentType[];
   /** True only when the project policy permits image delivery and the user confirms it. */
   photo_enabled: boolean;
@@ -126,7 +128,7 @@ export interface AutofillMetricSuccessResponse {
 
 export type AutofillMetricResponse = AutofillMetricSuccessResponse | AutofillErrorResponse;
 
-/** Display-only branding returned by the authenticated iframe bootstrap. */
+/** Display-only branding returned by the authenticated scanner bootstrap. */
 export interface AutofillEmbedBranding {
   mode: AutofillBrandingMode;
   name: string;
@@ -134,18 +136,18 @@ export interface AutofillEmbedBranding {
   show_powered_by: boolean;
 }
 
-/** Server-owned density preference for the hosted scanner's source selector. */
+/** Server-owned density preference for the scanner's source selector. */
 export type AutofillEmbedPresentationLayout = "compact" | "standard";
 
 /**
- * Display-only configuration delivered by the authenticated iframe bootstrap.
+ * Display-only configuration delivered by the authenticated scanner bootstrap.
  * It is intentionally not accepted from the partner browser integration.
  */
 export interface AutofillEmbedPresentation {
   layout: AutofillEmbedPresentationLayout;
 }
 
-/** Internal hosted-frame bootstrap contract; it never travels through the partner browser API. */
+/** Internal scanner bootstrap contract; it never travels through the partner browser API. */
 export interface AutofillEmbedBootstrap {
   protocol_version: typeof AUTOFILL_PROTOCOL_VERSION;
   project_id: string;
@@ -154,11 +156,11 @@ export interface AutofillEmbedBootstrap {
   allowed_document_types: AutofillDecodedDocumentType[];
   photo_enabled: boolean;
   branding: AutofillEmbedBranding;
-  /** Omitted by older servers; hosted embeds safely default to compact. */
+  /** Omitted by older servers; scanner runtimes safely default to compact. */
   presentation?: AutofillEmbedPresentation;
 }
 
-/** Request sent by the component to the partner after the embed extracts QR bytes. */
+/** Request sent by the component to the partner after the scanner extracts QR bytes. */
 export interface AutofillDecodeRequest {
   protocol_version: typeof AUTOFILL_PROTOCOL_VERSION;
   session_token: string;
@@ -208,7 +210,7 @@ function isBase64(value: unknown, maxLength: number): value is string {
     && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value);
 }
 
-/** Validates the bounded decoded result before it crosses into the hosted iframe UI. */
+/** Validates the bounded decoded result before it reaches the scanner review UI. */
 export function isAutofillDecodeData(value: unknown): value is AutofillDecodeData {
   if (!isRecord(value) || !isRecord(value.document) || !isRecord(value.fields)) return false;
   if (!hasExactKeys(value, ["document", "fields", "photo"])) return false;
