@@ -26,6 +26,12 @@ type DecodedResult = {
   photoUrl: string | null;
 };
 
+type ReviewFieldPresentation = {
+  label: string;
+  order: number;
+  wide?: boolean;
+};
+
 export type DirectScannerConfig = {
   projectId: string;
   sessionId: string;
@@ -90,22 +96,53 @@ function decodeResult(value: unknown): DecodedResult | null {
   return { document: { type: value.document.type, label: value.document.label }, fields, photoUrl };
 }
 
-function fieldLabel(key: string): string {
-  const labels: Record<string, string> = {
-    full_name: "Nome completo",
-    cpf: "CPF",
-    birth_date: "Data de nascimento",
-    mother_name: "Nome da mãe",
-    cnh_number: "Número da CNH",
-    category: "Categoria",
-    acc: "Autorização para Conduzir Ciclomotores (ACC)",
-    validity_date: "Validade",
-    license_plate: "Placa",
-    renavam: "RENAVAM",
-    vehicle_brand: "Marca/modelo",
-    vehicle_year: "Ano do veículo",
+const REVIEW_FIELD_PRESENTATION: Record<string, ReviewFieldPresentation> = {
+  full_name: { label: "Nome completo", order: 10, wide: true },
+  nome_completo: { label: "Nome completo", order: 10, wide: true },
+  nome: { label: "Nome completo", order: 10, wide: true },
+  nome_condutor: { label: "Nome completo", order: 10, wide: true },
+  cpf: { label: "CPF", order: 20 },
+  birth_date: { label: "Data de nascimento", order: 30 },
+  data_nascimento: { label: "Data de nascimento", order: 30 },
+  nascimento: { label: "Data de nascimento", order: 30 },
+  dt_nascimento: { label: "Data de nascimento", order: 30 },
+  mother_name: { label: "Nome da mãe", order: 40, wide: true },
+  nome_mae: { label: "Nome da mãe", order: 40, wide: true },
+  cnh_number: { label: "Número da CNH", order: 50 },
+  n_registro: { label: "Número da CNH", order: 50 },
+  registro: { label: "Número da CNH", order: 50 },
+  registro_cnh: { label: "Número da CNH", order: 50 },
+  numero_registro: { label: "Número da CNH", order: 50 },
+  category: { label: "Categoria", order: 60 },
+  categoria: { label: "Categoria", order: 60 },
+  categoria_habilitacao: { label: "Categoria", order: 60 },
+  acc: { label: "Autorização para Conduzir Ciclomotores (ACC)", order: 70, wide: true },
+  validity_date: { label: "Validade", order: 80 },
+  validade: { label: "Validade", order: 80 },
+  data_validade: { label: "Validade", order: 80 },
+  license_plate: { label: "Placa", order: 110 },
+  placa: { label: "Placa", order: 110 },
+  renavam: { label: "RENAVAM", order: 120 },
+  vehicle_brand: { label: "Marca/modelo", order: 130, wide: true },
+  marca_modelo: { label: "Marca/modelo", order: 130, wide: true },
+  marca_modelo_versao: { label: "Marca/modelo", order: 130, wide: true },
+  vehicle_year: { label: "Ano do veículo", order: 140 },
+  ano_fabricacao: { label: "Ano do veículo", order: 140 },
+  ano_fabricacao_modelo: { label: "Ano do veículo", order: 140 },
+  ano: { label: "Ano do veículo", order: 140 },
+  color: { label: "Cor", order: 150 },
+  cor: { label: "Cor", order: 150 },
+  cor_predominante: { label: "Cor", order: 150 },
+  owner: { label: "Proprietário", order: 160, wide: true },
+  proprietario: { label: "Proprietário", order: 160, wide: true },
+  nome_proprietario: { label: "Proprietário", order: 160, wide: true },
+};
+
+function reviewFieldPresentation(key: string): ReviewFieldPresentation {
+  return REVIEW_FIELD_PRESENTATION[key] || {
+    label: key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    order: Number.MAX_SAFE_INTEGER,
   };
-  return labels[key] || key.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 /**
@@ -176,9 +213,11 @@ export class DirectScanner {
     );
     const notice = document.createElement("div");
     notice.className = "notice";
-    notice.textContent = compact
-      ? "🔒 A câmera só é ativada após seu toque. Nada é enviado para analytics."
-      : "🔒 A câmera só é ativada após seu toque. O componente não envia imagens, QR Codes ou dados para analytics.";
+    notice.textContent = this.config.photoEnabled
+      ? "🔒 A câmera só é ativada após seu toque. A foto oficial será mostrada apenas nesta revisão. Nada é enviado para analytics."
+      : compact
+        ? "🔒 A câmera só é ativada após seu toque. Nada é enviado para analytics."
+        : "🔒 A câmera só é ativada após seu toque. O componente não envia imagens, QR Codes ou dados para analytics.";
     card.append(actions, notice);
     this.render(card, "Pronto para ler seu documento.");
   }
@@ -264,7 +303,7 @@ export class DirectScanner {
         this.payload = payload;
         this.stopCamera();
         this.metric("qr_found");
-        return this.requestDecode(false);
+        return this.requestDecode(this.config.photoEnabled);
       }
     } catch {
       // The scheduled loop keeps trying the next camera frame.
@@ -433,7 +472,7 @@ export class DirectScanner {
       if (!payload) throw new Error("Não encontramos um QR Code neste arquivo.");
       this.payload = payload;
       this.metric("qr_found");
-      await this.requestDecode(false);
+      await this.requestDecode(this.config.photoEnabled);
     } catch (cause) {
       this.error(cause instanceof Error ? cause.message : "Não foi possível ler este arquivo.");
     }
@@ -506,33 +545,53 @@ export class DirectScanner {
   private review(): void {
     if (!this.result || this.disposed) return;
     const card = this.card("Confira antes de preencher", "Você pode editar os campos abaixo. Os valores existentes no formulário parceiro serão preservados por padrão.");
+    card.classList.add("review-card");
     const badge = document.createElement("span");
     badge.className = "badge";
     badge.textContent = `✓ ${this.result.document.label} reconhecida`;
     card.append(badge);
+
+    const review = document.createElement("div");
+    review.className = "review-content";
     if (this.result.photoUrl) {
+      review.classList.add("has-photo");
+      const identity = document.createElement("aside");
+      identity.className = "identity";
       const photo = document.createElement("img");
       photo.className = "photo";
       photo.src = this.result.photoUrl;
       photo.alt = "Foto retornada pelo documento";
-      card.append(photo);
+      const caption = document.createElement("p");
+      caption.className = "photo-caption";
+      caption.textContent = "Foto do documento";
+      identity.append(photo, caption);
+      review.append(identity);
     }
+
+    const fields = document.createElement("div");
+    fields.className = "review-fields";
     const inputs = new Map<string, HTMLInputElement>();
-    for (const [key, value] of Object.entries(this.result.fields)) {
+    const orderedFields = Object.entries(this.result.fields)
+      .map(([key, value]) => ({ key, value, presentation: reviewFieldPresentation(key) }))
+      .sort((left, right) => left.presentation.order - right.presentation.order || left.presentation.label.localeCompare(right.presentation.label));
+    for (const { key, value, presentation } of orderedFields) {
       const field = document.createElement("div");
       field.className = "field";
+      if (presentation.wide) field.classList.add("field-wide");
       const label = document.createElement("label");
       const input = document.createElement("input");
       const id = `consulta-field-${key}`;
       label.htmlFor = id;
-      label.textContent = fieldLabel(key);
+      label.textContent = presentation.label;
       input.id = id;
       input.value = value;
       input.autocomplete = "off";
       field.append(label, input);
-      card.append(field);
+      fields.append(field);
       inputs.set(key, input);
     }
+    review.append(fields);
+    card.append(review);
     const actions = document.createElement("div");
     actions.className = "actions";
     actions.append(
@@ -588,6 +647,7 @@ export class DirectScanner {
   }
 
   private render(card: HTMLElement, statusText: string): void {
+    this.root.classList.toggle("review-mode", card.classList.contains("review-card"));
     if (this.config.branding.showPoweredBy) {
       const powered = document.createElement("p");
       powered.className = "powered";

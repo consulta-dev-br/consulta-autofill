@@ -1,5 +1,12 @@
 # @consulta-dev/autofill
 
+## 0.1.10
+
+### Patch Changes
+
+- Show an enabled document photo in a structured review: photo and two-column fields on desktop, compact photo and one-column fields on mobile.
+- Request the photo automatically when the project explicitly enables it.
+
 ## 0.1.9
 
 ### Patch Changes

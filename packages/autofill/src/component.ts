@@ -33,8 +33,8 @@ const styleText = `
   .trigger-icon:hover:not(:disabled) { background: rgb(21 94 239 / .12); }
   .trigger-icon svg { display: block; }
   .overlay { position: fixed; z-index: 2147483000; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(16 24 40 / .58); }
-  .dialog { position: relative; width: min(100%, 29rem); max-height: calc(100dvh - 2rem); outline: 0; }
-  .runtime { width: 100%; }
+  .dialog { position: relative; width: min(100%, 46rem); max-height: calc(100dvh - 2rem); outline: 0; }
+  .runtime { display: grid; width: 100%; justify-items: center; }
   .loading { padding: 1rem; border: 1px solid #e4e7ec; border-radius: .85rem; color: #475467; background: #fff; box-shadow: 0 24px 48px rgb(16 24 40 / .28); text-align: center; }
   @media (max-width: 34rem) {
     .overlay { align-items: end; padding: .75rem; }
